@@ -85,11 +85,11 @@
                 </select>
             </div>
             <div class="control-group" style="grid-column: 1 / -1;">
-                <label>Adjust Input Signal Values:</label>
+                <label>Adjust Input Signal Values (each slider is independent):</label>
                 <div id="input-sliders" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 6px;"></div>
                 <label style="margin-top: 10px; font-weight: normal; font-size: 0.85em; display: flex; align-items: center; gap: 6px;">
-                    <input type="checkbox" id="link-inputs" checked onchange="updateNetworkStructure()">
-                    Link all inputs (move together)
+                    <input type="checkbox" id="link-inputs" onchange="onLinkToggle()">
+                    Move all sliders together (linked mode)
                 </label>
             </div>
         </div>
@@ -166,7 +166,8 @@
             b_o: -0.2
         };
 
-        let inputValues = [0.5, 0.5, 0.5];
+        // Distinct default values so users immediately see independence
+        let inputValues = [0.5, -0.3, 0.8];
 
         function buildInputSliders(count) {
             const container = document.getElementById('input-sliders');
@@ -184,9 +185,28 @@
             }
         }
 
+        function onLinkToggle() {
+            // When the user enables linked mode, snap all sliders to the first slider's value
+            if (document.getElementById('link-inputs').checked) {
+                const firstEl = document.getElementById('input-val-0');
+                if (firstEl) {
+                    const first = parseFloat(firstEl.value);
+                    inputValues = inputValues.map(() => first);
+                    inputValues.forEach((val, i) => {
+                        const el = document.getElementById(`input-val-${i}`);
+                        if (el) el.value = val;
+                        const lbl = document.getElementById(`val-display-${i}`);
+                        if (lbl) lbl.innerText = val.toFixed(1);
+                    });
+                }
+            }
+            updateNetworkStructure();
+        }
+
         function onSliderInput(idx, value) {
             const v = parseFloat(value);
             if (document.getElementById('link-inputs').checked) {
+                // Linked mode: mirror this value across all sliders
                 inputValues = inputValues.map(() => v);
                 inputValues.forEach((val, i) => {
                     const el = document.getElementById(`input-val-${i}`);
@@ -195,6 +215,7 @@
                     if (lbl) lbl.innerText = val.toFixed(1);
                 });
             } else {
+                // Independent mode: only update the dragged slider
                 inputValues[idx] = v;
                 const lbl = document.getElementById(`val-display-${idx}`);
                 if (lbl) lbl.innerText = v.toFixed(1);
@@ -206,7 +227,13 @@
             const inputs = parseInt(document.getElementById('input-count').value);
             const hiddens = parseInt(document.getElementById('hidden-count').value);
 
+            // Rebuild sliders if the input count changed, preserving live DOM values
             if (document.getElementById('input-sliders').children.length !== inputs) {
+                const existing = document.getElementById('input-sliders').children.length;
+                for (let i = 0; i < existing; i++) {
+                    const el = document.getElementById(`input-val-${i}`);
+                    if (el) inputValues[i] = parseFloat(el.value);
+                }
                 buildInputSliders(inputs);
             }
 
@@ -1267,8 +1294,6 @@
         }
 
         window.addEventListener('resize', () => {
-            const inputs = parseInt(document.getElementById('input-count').value);
-            const hiddens = parseInt(document.getElementById('hidden-count').value);
             updateNetworkStructure();
         });
 
