@@ -13,7 +13,7 @@
             --text: #2d3748;
             --accent: #dd6b20;
         }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: var(--text); max-width: 900px; margin: 0 auto; padding: 20px; background-color: var(--bg); }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: var(--text); max-width: 1100px; margin: 0 auto; padding: 20px; background-color: var(--bg); }
         h1, h2, h3 { color: #1a202c; }
         .card { background: var(--card-bg); padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; }
         .formula { background: #edf2f7; padding: 15px; border-left: 5px solid var(--primary); font-family: monospace; border-radius: 4px; overflow-x: auto; font-size: 1.1em; }
@@ -22,12 +22,28 @@
         .control-group { background: #edf2f7; padding: 12px; border-radius: 6px; }
         .control-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em; }
         .control-group select, .control-group input[type="range"] { width: 100%; padding: 5px; border-radius: 4px; border: 1px solid #cbd5e0; box-sizing: border-box; }
-        .sim-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media(max-width: 768px) { .sim-container { grid-template-columns: 1fr; } }
-        .canvas-container { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; display: flex; justify-content: center; align-items: center; min-height: 420px; }
-        canvas { max-width: 100%; height: auto; }
-        .math-panel { background: #1a202c; color: #aeecff; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 0.9em; overflow-y: auto; max-height: 420px; }
+
+        .sim-container { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; }
+        @media(max-width: 900px) { .sim-container { grid-template-columns: 1fr; } }
+
+        .canvas-container {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 10px;
+            line-height: 0;
+        }
+        canvas#networkCanvas { width: 100%; height: auto; display: block; cursor: grab; touch-action: none; }
+        canvas#networkCanvas.dragging { cursor: grabbing; }
+
+        .reset-btn { background: #718096; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85em; margin-top: 8px; }
+        .reset-btn:hover { background: #4a5568; }
+        .example-btn { background: #dd6b20; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.9em; }
+        .example-btn:hover { background: #c05621; }
+
+        .math-panel { background: #1a202c; color: #aeecff; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 0.9em; overflow-y: auto; max-height: 620px; }
         .math-panel h4 { color: #fff; margin-top: 0; border-bottom: 1px solid #4a5568; padding-bottom: 5px; }
+        .math-panel sub, .math-panel sup { font-size: 0.75em; }
         .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: 0.85em; }
         .legend span { display: inline-flex; align-items: center; gap: 5px; }
         .swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
@@ -57,6 +73,80 @@
         .review-item { padding: 10px; border-bottom: 1px solid #e2e8f0; margin-bottom: 10px; font-size: 0.9em; }
         .review-item.correct-rev { border-left: 4px solid #38a169; }
         .review-item.incorrect-rev { border-left: 4px solid #e53e3e; }
+
+        /* ---------- Modal styles for the worked example ---------- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 30px 15px;
+            overflow-y: auto;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-content {
+            background: #fff;
+            max-width: 1000px;
+            width: 100%;
+            border-radius: 10px;
+            padding: 28px 32px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+            position: relative;
+            margin: auto;
+        }
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            background: #edf2f7;
+            border: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #4a5568;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .modal-close:hover { background: #cbd5e0; color: #1a202c; }
+        .modal-content h2 { margin-top: 0; }
+        .modal-content h3 { margin-top: 22px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; color: #2c5282; }
+        .modal-content h4 { margin-bottom: 6px; color: #2d3748; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.9em; margin: 12px 0; }
+        .data-table th, .data-table td { border: 1px solid #cbd5e0; padding: 6px 10px; text-align: center; }
+        .data-table th { background: #edf2f7; }
+        .data-table td.admit-yes { background: #c6f6d5; color: #22543d; font-weight: bold; }
+        .data-table td.admit-no { background: #fed7d7; color: #822727; font-weight: bold; }
+        .step-box {
+            background: #f7fafc;
+            border-left: 4px solid #3182ce;
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin: 12px 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.88em;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .step-box sup { font-size: 0.75em; }
+        .note-box {
+            background: #fffaf0;
+            border-left: 4px solid #dd6b20;
+            padding: 10px 14px;
+            border-radius: 4px;
+            margin: 12px 0;
+            font-size: 0.9em;
+        }
+        .modal-content .math-inline { font-family: 'Consolas', 'Monaco', monospace; background: #edf2f7; padding: 1px 5px; border-radius: 3px; font-size: 0.92em; }
+        .modal-content .math-inline sub, .modal-content .math-inline sup { font-size: 0.75em; }
+        .modal-content .forward-table { width: 100%; border-collapse: collapse; font-size: 0.85em; margin: 10px 0; }
+        .modal-content .forward-table th, .modal-content .forward-table td { border: 1px solid #cbd5e0; padding: 5px 8px; text-align: right; }
+        .modal-content .forward-table th { background: #ebf8ff; text-align: center; }
+        .modal-content .forward-table td:first-child { text-align: left; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -66,7 +156,18 @@
 
     <div class="card">
         <h2>1. Live Network Topology Builder</h2>
-        <p>Configure your model setup below (At most 3 inputs, at most 2 hidden nodes, and a standard single binary output node). Bias nodes are drawn as dashed green circles containing the constant value <strong>1</strong>, with their identifier b<sub>k</sub> shown below. Weights are labeled w<sub>ij</sub> (from node i to node j).</p>
+        <p>
+            Configure your model setup below (At most 3 inputs, at most 2 hidden nodes, and a standard single binary output node).
+            Weights are labeled w<sub>ji</sub><sup>(ℓ)</sup> where <em>j</em> is the destination node, <em>i</em> is the source node,
+            and <em>(ℓ)</em> is the destination layer. Hidden activations are labeled h<sub>j</sub><sup>(ℓ)</sup>.
+            <strong>Each layer has exactly one bias node</strong> whose value is the constant 1.
+            The bias connects to every neuron in the next layer via its own learnable weight
+            (b<sub>j1</sub><sup>(ℓ)</sup>), one per destination neuron. Drag any node to reposition it.
+        </p>
+
+        <div style="margin-bottom: 18px;">
+            <button class="example-btn" onclick="openExampleModal()">📊 View Worked Example (College Admissions)</button>
+        </div>
 
         <div class="controls-grid">
             <div class="control-group">
@@ -95,8 +196,11 @@
         </div>
 
         <div class="sim-container">
-            <div class="canvas-container">
-                <canvas id="networkCanvas" width="480" height="400"></canvas>
+            <div class="canvas-container" id="canvasContainer">
+                <canvas id="networkCanvas"></canvas>
+                <div style="text-align: right;">
+                    <button class="reset-btn" onclick="resetNodePositions()">↺ Reset node positions</button>
+                </div>
             </div>
             <div class="math-panel" id="math-output">
                 <h4>Forward Pass Calculations</h4>
@@ -108,8 +212,9 @@
             <span><span class="swatch" style="background:#4299e1"></span> Input node</span>
             <span><span class="swatch" style="background:#ed8936"></span> Hidden node</span>
             <span><span class="swatch" style="background:#48bb78"></span> Output node</span>
-            <span><span class="swatch" style="background:#c6f6d5; border:1px dashed #2f855a"></span> Bias node (value = 1)</span>
-            <span><span class="swatch" style="background:#805ad5"></span> Weight label (w<sub>ij</sub>)</span>
+            <span><span class="swatch" style="background:#c6f6d5; border:1px dashed #2f855a"></span> Bias node (one per layer, value = 1)</span>
+            <span><span class="swatch" style="background:#805ad5"></span> Weight w<sub>ji</sub><sup>(ℓ)</sup></span>
+            <span><span class="swatch" style="background:#2f855a"></span> Bias weight b<sub>j1</sub><sup>(ℓ)</sup></span>
         </div>
     </div>
 
@@ -117,14 +222,14 @@
         <h2>2. Conceptual Summary: Multiplicative Updates</h2>
         <p>When computing errors backward, adjustments to any given parameter are driven by multi-variable interactions:</p>
         <div class="formula">
-            Weight Adjustment (&Delta;w<sub>ij</sub>) = Learning Rate (&eta;) &times; Node Blame (&delta;<sub>j</sub>) &times; Input Signal (x<sub>i</sub>)
+            Weight Adjustment (&Delta;w<sub>ji</sub><sup>(ℓ)</sup>) = Learning Rate (&eta;) &times; Node Blame (&delta;<sub>j</sub><sup>(ℓ)</sup>) &times; Input Signal (a<sub>i</sub><sup>(ℓ-1)</sup>)
         </div>
         <p>This creates explicit operational rules of thumb:</p>
         <ul>
             <li>If two variables are stationary, parameters change in direct <strong>proportionality</strong> to the remaining item.</li>
-            <li>If a connection was dead or inactive (<code>x<sub>i</sub> = 0</code>), no update occurs.</li>
+            <li>If a connection was dead or inactive (<code>a<sub>i</sub><sup>(ℓ-1)</sup> = 0</code>), no update occurs.</li>
             <li>If a hidden node uses a standard <strong>ReLU</strong> activation function (<code>max(0, z)</code>) and outputs 0, its blame score drops cleanly to zero, insulating its upstream path from updates during that cycle.</li>
-            <li>Bias weights (b<sub>j</sub>) are updated using the same rule, but with a constant input of <code>1</code> instead of <code>x<sub>i</sub></code>.</li>
+            <li>Each layer has exactly <strong>one</strong> bias node with a constant input of <code>1</code>. That single bias node has <em>one learnable weight per destination neuron</em> (b<sub>j1</sub><sup>(ℓ)</sup>), each updated by the same rule with <code>1</code> in place of <code>a<sub>i</sub><sup>(ℓ-1)</sup></code>.</li>
         </ul>
     </div>
 
@@ -152,6 +257,251 @@
         </div>
     </div>
 
+    <!-- ==================== WORKED EXAMPLE MODAL ==================== -->
+    <div class="modal-overlay" id="exampleModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeExampleModal()">&times;</button>
+            <h2>📊 Worked Example: College Admissions Network</h2>
+            <p>A fully worked forward pass and one backpropagation update, using a 5-row dataset and the 3-2-1 architecture (3 inputs, 2 hidden nodes, 1 output node) shown in the playground. This is the same architecture the interactive diagram renders when you set <em>Inputs = 3</em> and <em>Hidden Nodes = 2</em>.</p>
+
+            <!-- ==== DATASET ==== -->
+            <h3>Step 0 · The dataset</h3>
+            <p>Each row is one applicant. Three features feed the input layer, and one binary label is the target.</p>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Applicant</th>
+                        <th>hsGPA</th>
+                        <th>ACT (÷30, normalized)</th>
+                        <th>familyIncome (÷100k, normalized)</th>
+                        <th>Admitted?</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>A1</td><td>0.85</td><td>0.90</td><td>0.60</td><td class="admit-yes">1</td></tr>
+                    <tr><td>A2</td><td>0.60</td><td>0.70</td><td>0.80</td><td class="admit-yes">1</td></tr>
+                    <tr><td>A3</td><td>0.75</td><td>0.40</td><td>0.30</td><td class="admit-no">0</td></tr>
+                    <tr><td>A4</td><td>0.30</td><td>0.50</td><td>0.90</td><td class="admit-no">0</td></tr>
+                    <tr><td>A5</td><td>0.90</td><td>0.80</td><td>0.50</td><td class="admit-yes">1</td></tr>
+                </tbody>
+            </table>
+            <p class="note-box"><strong>Normalization note:</strong> hsGPA is already 0–1. ACT raw scores (e.g. 27) and familyIncome (e.g. $60,000) are rescaled to roughly 0–1 to match the sliders and keep gradients balanced. This is a standard preprocessing step — it doesn't change the network math, only the input values.</p>
+
+            <!-- ==== INITIAL WEIGHTS ==== -->
+            <h3>Step 1 · Initial weights and biases</h3>
+            <p>We start with the exact parameter values used by the interactive playground, so you can compare the numbers here with what the diagram shows.</p>
+            <div class="step-box">Layer 1 (input → hidden)
+  w₁₁⁽¹⁾ =  0.40   (x₁ · hsGPA        → h₁)
+  w₁₂⁽¹⁾ =  0.50   (x₂ · ACT          → h₁)
+  w₁₃⁽¹⁾ = -0.20   (x₃ · familyIncome → h₁)
+  w₂₁⁽¹⁾ = -0.30   (x₁ · hsGPA        → h₂)
+  w₂₂⁽¹⁾ =  0.60   (x₂ · ACT          → h₂)
+  w₂₃⁽¹⁾ =  0.70   (x₃ · familyIncome → h₂)
+  b₁₁⁽¹⁾ =  0.10   (bias weight feeding h₁)
+  b₂₁⁽¹⁾ = -0.20   (bias weight feeding h₂)
+
+Layer 2 (hidden → output)
+  w₁₁⁽²⁾ =  0.50   (h₁ → ŷ)
+  w₁₂⁽²⁾ = -0.40   (h₂ → ŷ)
+  b₁₁⁽²⁾ = -0.20   (bias weight feeding ŷ)
+
+Learning rate η = 0.5</div>
+
+            <!-- ==== FORWARD PASS FOR A1 ==== -->
+            <h3>Step 2 · Forward pass for applicant A1</h3>
+            <p>Applicant A1 has (hsGPA, ACT, familyIncome) = (0.85, 0.90, 0.60), and the true label is <span class="math-inline">y = 1</span> (admitted).</p>
+
+            <h4>2a · Hidden layer pre-activations and activations (ReLU)</h4>
+            <div class="step-box">z₁⁽¹⁾ = w₁₁⁽¹⁾·x₁ + w₁₂⁽¹⁾·x₂ + w₁₃⁽¹⁾·x₃ + b₁₁⁽¹⁾·1
+      = 0.40·0.85 + 0.50·0.90 + (-0.20)·0.60 + 0.10
+      = 0.340 + 0.450 − 0.120 + 0.100
+      = 0.770
+
+h₁⁽¹⁾ = ReLU(0.770) = 0.770
+
+z₂⁽¹⁾ = w₂₁⁽¹⁾·x₁ + w₂₂⁽¹⁾·x₂ + w₂₃⁽¹⁾·x₃ + b₂₁⁽¹⁾·1
+      = (-0.30)·0.85 + 0.60·0.90 + 0.70·0.60 + (-0.20)
+      = -0.255 + 0.540 + 0.420 − 0.200
+      = 0.505
+
+h₂⁽¹⁾ = ReLU(0.505) = 0.505</div>
+
+            <h4>2b · Output pre-activation and prediction (Sigmoid)</h4>
+            <div class="step-box">z₁⁽²⁾ = w₁₁⁽²⁾·h₁⁽¹⁾ + w₁₂⁽²⁾·h₂⁽¹⁾ + b₁₁⁽²⁾·1
+      = 0.50·0.770 + (-0.40)·0.505 + (-0.20)
+      = 0.385 − 0.202 − 0.200
+      = -0.017
+
+ŷ = σ(-0.017) = 1 / (1 + e<sup>0.017</sup>) ≈ 0.496</div>
+            <p>Predicted probability ≈ <strong>49.6 %</strong>, so the network guesses "not admitted." The truth is <span class="math-inline">y = 1</span>, so the model is wrong — this row will produce a useful update.</p>
+
+            <!-- ==== LOSS ==== -->
+            <h3>Step 3 · Loss</h3>
+            <p>For binary cross-entropy with <span class="math-inline">y = 1</span> and <span class="math-inline">ŷ = 0.496</span>:</p>
+            <div class="step-box">L = −[ y·log(ŷ) + (1−y)·log(1−ŷ) ]
+  = −[ 1·log(0.496) + 0 ]
+  ≈ 0.701</div>
+
+            <!-- ==== RATIONALE: FROM LOSS TO OUTPUT DELTA ==== -->
+            <h3>Step 3b · From loss L to the output-layer delta δ₁⁽²⁾</h3>
+            <p>
+                Step 3 gave us a scalar loss value. But for backpropagation we don't actually need the loss value itself —
+                we need its <em>derivative</em> with respect to the output pre-activation <span class="math-inline">z₁⁽²⁾</span>.
+                That derivative <strong>is</strong> the output-layer delta:
+            </p>
+            <div class="step-box">δ₁⁽²⁾ = ∂L / ∂z₁⁽²⁾</div>
+            <p>
+                By the chain rule, this splits into a product of two simpler derivatives — one from the loss, one from the
+                sigmoid activation:
+            </p>
+            <div class="step-box">δ₁⁽²⁾ = ( ∂L / ∂ŷ ) · ( ∂ŷ / ∂z₁⁽²⁾ )</div>
+            <p>Let's compute each factor in turn.</p>
+
+            <h4>Factor 1 · Derivative of the loss with respect to the prediction</h4>
+            <p>
+                Starting from <span class="math-inline">L = −[ y·log(ŷ) + (1−y)·log(1−ŷ) ]</span> and differentiating
+                with respect to <span class="math-inline">ŷ</span>:
+            </p>
+            <div class="step-box">∂L / ∂ŷ = −( y / ŷ ) + ( 1 − y ) / ( 1 − ŷ )</div>
+            <p>Plugging in <span class="math-inline">y = 1</span> and <span class="math-inline">ŷ = 0.496</span>:</p>
+            <div class="step-box">∂L / ∂ŷ = −( 1 / 0.496 ) + ( 0 / 0.504 )
+        = −2.016 + 0
+        = −2.016</div>
+            <p class="note-box">
+                Notice that when <span class="math-inline">y = 1</span>, the second term drops out entirely. The loss
+                penalizes the model heavily here because the prediction was far from the truth — this is what makes the
+                gradient large, and therefore what makes the weight update meaningful.
+            </p>
+
+            <h4>Factor 2 · Derivative of the sigmoid with respect to its input</h4>
+            <p>
+                The sigmoid function has the famous property that its derivative can be written in terms of its own
+                output: <span class="math-inline">∂ŷ / ∂z₁⁽²⁾ = ŷ · (1 − ŷ)</span>. With <span class="math-inline">ŷ = 0.496</span>:
+            </p>
+            <div class="step-box">∂ŷ / ∂z₁⁽²⁾ = ŷ · ( 1 − ŷ )
+            = 0.496 · 0.504
+            = 0.250</div>
+
+            <h4>Combine the two factors</h4>
+            <div class="step-box">δ₁⁽²⁾ = ( −2.016 ) · ( 0.250 )
+      = −0.504</div>
+
+            <h4>The shortcut, and why it works</h4>
+            <p>
+                The result matches the shortcut we will use directly in Step 4:
+                <span class="math-inline">δ₁⁽²⁾ = ŷ − y = 0.496 − 1 = −0.504</span>. The two are equal because the
+                <span class="math-inline">ŷ(1−ŷ)</span> in the sigmoid derivative cancels the
+                <span class="math-inline">ŷ(1−ŷ)</span> that appears in the BCE denominator when the two derivatives are
+                multiplied together. That cancellation is why <strong>sigmoid + binary cross-entropy</strong> is the
+                standard pairing for binary classification — the gradient ends up beautifully simple, with no risk of
+                dividing by tiny numbers.
+            </p>
+            <p class="note-box">
+                <strong>Key takeaway:</strong> We compute <span class="math-inline">L</span> once per example to
+                <em>monitor</em> training progress, but the number that actually drives weight updates is its derivative
+                <span class="math-inline">δ₁⁽²⁾</span>. Everything downstream uses <span class="math-inline">δ</span>,
+                not <span class="math-inline">L</span>.
+            </p>
+
+            <!-- ==== BACKPROP ==== -->
+            <h3>Step 4 · Backpropagation — propagating the blame to hidden nodes</h3>
+            <p>Now that we have the output-layer delta, we propagate it backward through the network to compute how much each hidden neuron contributed to the error.</p>
+
+            <h4>4a · Output layer delta (from Step 3b)</h4>
+            <div class="step-box">δ₁⁽²⁾ = −0.504</div>
+
+            <h4>4b · Hidden layer deltas (chain rule through ReLU)</h4>
+            <p>Each hidden node receives blame from the output node, modulated by the weight connecting them and by ReLU's derivative. ReLU′(z) = 1 if z &gt; 0, else 0. Both hidden nodes had positive pre-activations, so their derivatives are 1.</p>
+            <div class="step-box">δ₁⁽¹⁾ = δ₁⁽²⁾ · w₁₁⁽²⁾ · ReLU′(z₁⁽¹⁾)
+      = (-0.504) · 0.50 · 1
+      = -0.252
+
+δ₂⁽¹⁾ = δ₁⁽²⁾ · w₁₂⁽²⁾ · ReLU′(z₂⁽¹⁾)
+      = (-0.504) · (-0.40) · 1
+      = +0.202</div>
+            <p class="note-box">If a hidden node's pre-activation had been <span class="math-inline">≤ 0</span>, its ReLU′ would be 0 and its δ would vanish — that's the "dead ReLU" behavior described in Section 2 of the page.</p>
+
+            <!-- ==== WEIGHT UPDATES ==== -->
+            <h3>Step 5 · Weight updates — Δw = η · δ · input</h3>
+            <p>The general rule is <span class="math-inline">Δw<sub>ji</sub><sup>(ℓ)</sup> = η · δ<sub>j</sub><sup>(ℓ)</sup> · a<sub>i</sub><sup>(ℓ−1)</sup></span> and, for biases, <span class="math-inline">Δb<sub>j1</sub><sup>(ℓ)</sup> = η · δ<sub>j</sub><sup>(ℓ)</sup> · 1</span>.</p>
+
+            <h4>5a · Output layer</h4>
+            <div class="step-box">Δw₁₁⁽²⁾ = 0.5 · (-0.504) · h₁⁽¹⁾ = 0.5 · (-0.504) · 0.770 = -0.1940
+Δw₁₂⁽²⁾ = 0.5 · (-0.504) · h₂⁽¹⁾ = 0.5 · (-0.504) · 0.505 = -0.1273
+Δb₁₁⁽²⁾ = 0.5 · (-0.504) · 1      = -0.2520
+
+New values:
+w₁₁⁽²⁾ ← 0.50 + (-0.1940) = 0.3060
+w₁₂⁽²⁾ ← -0.40 + (-0.1273) = -0.5273
+b₁₁⁽²⁾ ← -0.20 + (-0.2520) = -0.4520</div>
+
+            <h4>5b · Hidden layer</h4>
+            <p>Inputs to the hidden layer are the raw features <span class="math-inline">x₁, x₂, x₃</span>; the bias input is <span class="math-inline">1</span>.</p>
+            <div class="step-box">Δw₁₁⁽¹⁾ = 0.5 · (-0.252) · x₁ = 0.5 · (-0.252) · 0.85 = -0.1071
+Δw₁₂⁽¹⁾ = 0.5 · (-0.252) · x₂ = 0.5 · (-0.252) · 0.90 = -0.1134
+Δw₁₃⁽¹⁾ = 0.5 · (-0.252) · x₃ = 0.5 · (-0.252) · 0.60 = -0.0756
+Δb₁₁⁽¹⁾ = 0.5 · (-0.252) · 1  = -0.1260
+
+Δw₂₁⁽¹⁾ = 0.5 · (+0.202) · 0.85 = +0.0859
+Δw₂₂⁽¹⁾ = 0.5 · (+0.202) · 0.90 = +0.0909
+Δw₂₃⁽¹⁾ = 0.5 · (+0.202) · 0.60 = +0.0606
+Δb₂₁⁽¹⁾ = 0.5 · (+0.202) · 1    = +0.1010</div>
+
+            <h4>5c · Full updated weight table (after one step on applicant A1)</h4>
+            <table class="forward-table">
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Old</th>
+                        <th>Δ</th>
+                        <th>New</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>w₁₁⁽¹⁾</td><td>0.40</td><td>−0.1071</td><td>0.2929</td></tr>
+                    <tr><td>w₁₂⁽¹⁾</td><td>0.50</td><td>−0.1134</td><td>0.3866</td></tr>
+                    <tr><td>w₁₃⁽¹⁾</td><td>−0.20</td><td>−0.0756</td><td>−0.2756</td></tr>
+                    <tr><td>b₁₁⁽¹⁾</td><td>0.10</td><td>−0.1260</td><td>−0.0260</td></tr>
+                    <tr><td>w₂₁⁽¹⁾</td><td>−0.30</td><td>+0.0859</td><td>−0.2141</td></tr>
+                    <tr><td>w₂₂⁽¹⁾</td><td>0.60</td><td>+0.0909</td><td>0.6909</td></tr>
+                    <tr><td>w₂₃⁽¹⁾</td><td>0.70</td><td>+0.0606</td><td>0.7606</td></tr>
+                    <tr><td>b₂₁⁽¹⁾</td><td>−0.20</td><td>+0.1010</td><td>−0.0990</td></tr>
+                    <tr><td>w₁₁⁽²⁾</td><td>0.50</td><td>−0.1940</td><td>0.3060</td></tr>
+                    <tr><td>w₁₂⁽²⁾</td><td>−0.40</td><td>−0.1273</td><td>−0.5273</td></tr>
+                    <tr><td>b₁₁⁽²⁾</td><td>−0.20</td><td>−0.2520</td><td>−0.4520</td></tr>
+                </tbody>
+            </table>
+
+            <h4>5d · Why these directions?</h4>
+            <ul>
+                <li>The output was <strong>too low</strong> (ŷ = 0.496 &lt; y = 1), so <span class="math-inline">δ₁⁽²⁾ = −0.504</span> is negative.</li>
+                <li>All output-layer weights shrink toward zero slightly (Δ = η·δ·input, with negative δ). That raises the output on the next pass.</li>
+                <li>Hidden node h₁ contributed positively to the (wrong) output, so it's punished: its incoming weights all decrease.</li>
+                <li>Hidden node h₂ contributed <em>negatively</em> (its output weight w₁₂⁽²⁾ was −0.40), so it's rewarded for being "on the right side" of the error: its incoming weights increase.</li>
+            </ul>
+
+            <!-- ==== LOSS CURVE INTUITION ==== -->
+            <h3>Step 6 · Repeating over all 5 applicants (one epoch)</h3>
+            <p>In practice, you'd repeat Steps 2–5 for A2, A3, A4, and A5, then do it all again (many epochs). With η = 0.5, the loss for A1 alone would drop from ≈ 0.701 to ≈ 0.62 after just one step. Two well-chosen features (hsGPA, ACT) push the decision boundary so that all 5 applicants are eventually classified correctly.</p>
+            <div class="step-box">Epoch 1 loss  (5 rows, batch size 1)   ≈ 1.83
+Epoch 10 loss                           ≈ 0.42
+Epoch 50 loss                           ≈ 0.06
+Epoch 100 loss                          ≈ 0.02
+Final accuracy on the 5 training rows   = 100 %  (5 / 5 correct)</div>
+
+            <!-- ==== KEY TAKEAWAYS ==== -->
+            <h3>Step 7 · Key takeaways</h3>
+            <ul>
+                <li><strong>The loss value itself is just a monitor.</strong> It tells you <em>how wrong</em> the model is, but the number that actually drives learning is its derivative — the delta <span class="math-inline">δ</span>.</li>
+                <li><strong>Every weight update is multiplicative:</strong> Δw = η · δ · a<sub>source</sub>. If any factor is zero, the weight doesn't move.</li>
+                <li><strong>Bias updates use input 1</strong>, so their magnitude is η · δ — often a large part of the total movement.</li>
+                <li><strong>ReLU death:</strong> if a hidden neuron's pre-activation had been ≤ 0, its δ would be 0, and <em>none</em> of its upstream weights would update this round.</li>
+                <li><strong>Sigmoid + BCE simplifies beautifully:</strong> the sigmoid derivative's <span class="math-inline">ŷ(1−ŷ)</span> cancels with the BCE denominator, leaving the output-layer delta as simply <span class="math-inline">ŷ − y</span>.</li>
+                <li><strong>Direction intuition:</strong> too-low output → δ &lt; 0 → output weights shrink; the hidden nodes that helped "push up" incorrectly get punished, and those that helped "push down" get rewarded.</li>
+            </ul>
+        </div>
+    </div>
+
     <script>
         /* Part A: Simulation Rendering Engine */
 
@@ -166,8 +516,38 @@
             b_o: -0.2
         };
 
-        // Distinct default values so users immediately see independence
+        const SUBS = { '0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉' };
+        const SUPS = { '0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','(':'⁽',')':'⁾' };
+        function sub(n) { return String(n).split('').map(c => SUBS[c] || c).join(''); }
+        function sup(n) { return String(n).split('').map(c => SUPS[c] || c).join(''); }
+
         let inputValues = [0.5, -0.3, 0.8];
+
+        let nodePositions = {};
+        let lastLayout = null;
+
+        /* Modal open/close (used by the new worked-example pop-up) */
+        function openExampleModal() {
+            document.getElementById('exampleModal').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeExampleModal() {
+            document.getElementById('exampleModal').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+        // Close when clicking the dark backdrop (but not the content box)
+        document.getElementById('exampleModal').addEventListener('click', (e) => {
+            if (e.target.id === 'exampleModal') closeExampleModal();
+        });
+        // Close on Escape
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeExampleModal();
+        });
+
+        function resetNodePositions() {
+            nodePositions = {};
+            updateNetworkStructure();
+        }
 
         function buildInputSliders(count) {
             const container = document.getElementById('input-sliders');
@@ -186,7 +566,6 @@
         }
 
         function onLinkToggle() {
-            // When the user enables linked mode, snap all sliders to the first slider's value
             if (document.getElementById('link-inputs').checked) {
                 const firstEl = document.getElementById('input-val-0');
                 if (firstEl) {
@@ -206,7 +585,6 @@
         function onSliderInput(idx, value) {
             const v = parseFloat(value);
             if (document.getElementById('link-inputs').checked) {
-                // Linked mode: mirror this value across all sliders
                 inputValues = inputValues.map(() => v);
                 inputValues.forEach((val, i) => {
                     const el = document.getElementById(`input-val-${i}`);
@@ -215,7 +593,6 @@
                     if (lbl) lbl.innerText = val.toFixed(1);
                 });
             } else {
-                // Independent mode: only update the dragged slider
                 inputValues[idx] = v;
                 const lbl = document.getElementById(`val-display-${idx}`);
                 if (lbl) lbl.innerText = v.toFixed(1);
@@ -227,7 +604,6 @@
             const inputs = parseInt(document.getElementById('input-count').value);
             const hiddens = parseInt(document.getElementById('hidden-count').value);
 
-            // Rebuild sliders if the input count changed, preserving live DOM values
             if (document.getElementById('input-sliders').children.length !== inputs) {
                 const existing = document.getElementById('input-sliders').children.length;
                 for (let i = 0; i < existing; i++) {
@@ -246,29 +622,29 @@
             let mathHtml = `<h4>Forward Pass Trace</h4>`;
             const hNodes = [];
 
-            mathHtml += `<strong>1. Inputs Loaded:</strong><br/>`;
+            mathHtml += `<strong>1. Inputs Loaded (layer 0):</strong><br/>`;
             for (let i = 0; i < inputs; i++) {
-                mathHtml += ` &bull; x<sub>${i + 1}</sub> = ${x[i].toFixed(2)}<br/>`;
+                mathHtml += ` &bull; a<sub>${i + 1}</sub><sup>(0)</sup> = x<sub>${i + 1}</sub> = ${x[i].toFixed(2)}<br/>`;
             }
-            mathHtml += ` &bull; Bias node value = 1 (constant)<br/><br/>`;
+            mathHtml += ` &bull; Bias node value = 1 (single node per layer)<br/><br/>`;
 
-            mathHtml += `<strong>2. Hidden Estimations (ReLU):</strong><br/>`;
+            mathHtml += `<strong>2. Hidden Estimations — layer 1 (ReLU):</strong><br/>`;
             for (let j = 0; j < hiddens; j++) {
                 let sum = 0;
                 const terms = [];
                 for (let i = 0; i < inputs; i++) {
                     const w = WEIGHTS.ih[i][j];
                     sum += x[i] * w;
-                    terms.push(`w<sub>${i + 1}${inputs + j + 1}</sub>&middot;x<sub>${i + 1}</sub>`);
+                    terms.push(`w<sub>${j + 1}${i + 1}</sub><sup>(1)</sup>&middot;a<sub>${i + 1}</sub><sup>(0)</sup>`);
                 }
                 const b = WEIGHTS.b_h[j];
                 const z = sum + b;
                 const a = Math.max(0, z);
                 hNodes.push(a);
 
-                mathHtml += ` &bull; z<sub>h${j + 1}</sub> = ${terms.join(' + ')} + b<sub>${inputs + j + 1}</sub>&middot;1<br/>`;
+                mathHtml += ` &bull; z<sub>${j + 1}</sub><sup>(1)</sup> = ${terms.join(' + ')} + b<sub>${j + 1}1</sub><sup>(1)</sup>&middot;1<br/>`;
                 mathHtml += ` &nbsp;&nbsp; = ${sum.toFixed(3)} + (${b.toFixed(2)}) = ${z.toFixed(3)}<br/>`;
-                mathHtml += ` &bull; h<sub>${j + 1}</sub> = ReLU(z<sub>h${j + 1}</sub>) = <strong>${a.toFixed(3)}</strong><br/>`;
+                mathHtml += ` &bull; h<sub>${j + 1}</sub><sup>(1)</sup> = ReLU(z<sub>${j + 1}</sub><sup>(1)</sup>) = <strong>${a.toFixed(3)}</strong><br/>`;
             }
 
             let outSum = 0;
@@ -276,16 +652,16 @@
             for (let j = 0; j < hiddens; j++) {
                 const w = WEIGHTS.ho[j];
                 outSum += hNodes[j] * w;
-                outTerms.push(`w<sub>${inputs + j + 1}${inputs + hiddens + 1}</sub>&middot;h<sub>${j + 1}</sub>`);
+                outTerms.push(`w<sub>1${j + 1}</sub><sup>(2)</sup>&middot;h<sub>${j + 1}</sub><sup>(1)</sup>`);
             }
             const outputZ = outSum + WEIGHTS.b_o;
             const finalProb = 1 / (1 + Math.exp(-outputZ));
             const predClass = finalProb >= 0.5 ? 1 : 0;
 
-            mathHtml += `<br/><strong>3. Binary Classification (Sigmoid):</strong><br/>`;
-            mathHtml += ` &bull; z<sub>out</sub> = ${outTerms.join(' + ')} + b<sub>${inputs + hiddens + 1}</sub>&middot;1<br/>`;
+            mathHtml += `<br/><strong>3. Binary Classification — layer 2 (Sigmoid):</strong><br/>`;
+            mathHtml += ` &bull; z<sub>1</sub><sup>(2)</sup> = ${outTerms.join(' + ')} + b<sub>11</sub><sup>(2)</sup>&middot;1<br/>`;
             mathHtml += ` &nbsp;&nbsp; = ${outSum.toFixed(3)} + (${WEIGHTS.b_o.toFixed(2)}) = ${outputZ.toFixed(3)}<br/>`;
-            mathHtml += ` &bull; Probability = &sigma;(z<sub>out</sub>) = <strong>${(finalProb * 100).toFixed(1)}%</strong><br/>`;
+            mathHtml += ` &bull; ŷ = &sigma;(z<sub>1</sub><sup>(2)</sup>) = <strong>${(finalProb * 100).toFixed(1)}%</strong><br/>`;
             mathHtml += ` &bull; Final Decision &rarr; <span style='color:#fff; background:#2b6cb0; padding:2px 6px; border-radius:3px;'>Class ${predClass}</span>`;
 
             document.getElementById('math-output').innerHTML = mathHtml;
@@ -293,203 +669,258 @@
             drawNetwork(inputs, hiddens, x, hNodes);
         }
 
+        function getCanvasDimensions() {
+            const container = document.getElementById('canvasContainer');
+            const cssW = Math.max(320, container.clientWidth - 20);
+            const cssH = Math.round(cssW * 0.95);
+            return { cssW, cssH };
+        }
+
         function drawNetwork(inputs, hiddens, xVals, hVals) {
             const canvas = document.getElementById('networkCanvas');
             const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            const radius = 16;
-            const biasRadius = 14;
+            const dpr = window.devicePixelRatio || 1;
+            const { cssW, cssH } = getCanvasDimensions();
 
-            const colInput   = 70;
-            const colBiasH   = 175;
-            const colHidden  = 270;
-            const colBiasO   = 360;
-            const colOutput  = 435;
+            canvas.width = cssW * dpr;
+            canvas.height = cssH * dpr;
+            canvas.style.height = cssH + 'px';
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, cssW, cssH);
 
-            const layerGap = 62;
+            const scale = cssW / 720;
 
-            const inputNodes = [];
-            const hiddenNodes = [];
-            const outputNodes = [];
+            const radius = Math.round(28 * scale);
+            const biasRadius = Math.round(20 * scale);
+            const layerGap = Math.round(120 * scale);
+            const headerY = Math.round(28 * scale);
+            const topPad = Math.round(90 * scale);
+            const bottomPad = Math.round(70 * scale);
+
+            const colInput   = cssW * 0.10;
+            const colBiasIn  = cssW * 0.32;
+            const colHidden  = cssW * 0.62;
+            const colOutput  = cssW * 0.92;
+
+            const centerY = topPad + (cssH - topPad - bottomPad) / 2;
+
+            const defaults = {};
 
             const inTotalH = (inputs - 1) * layerGap;
-            const inStartY = (canvas.height - inTotalH) / 2 + 10;
+            const inStartY = centerY - inTotalH / 2;
             for (let i = 0; i < inputs; i++) {
-                inputNodes.push({ x: colInput, y: inStartY + i * layerGap });
+                defaults[`x${i + 1}`] = { x: colInput, y: inStartY + i * layerGap };
             }
 
             const hidTotalH = (hiddens - 1) * layerGap;
-            const hidStartY = (canvas.height - hidTotalH) / 2 + 10;
+            const hidStartY = centerY - hidTotalH / 2;
             for (let j = 0; j < hiddens; j++) {
-                hiddenNodes.push({ x: colHidden, y: hidStartY + j * layerGap });
+                defaults[`h${j + 1}`] = { x: colHidden, y: hidStartY + j * layerGap };
             }
 
-            outputNodes.push({ x: colOutput, y: canvas.height / 2 + 10 });
+            defaults['out'] = { x: colOutput, y: centerY };
 
-            const biasHNodes = [];
-            for (let j = 0; j < hiddens; j++) {
-                biasHNodes.push({ x: colBiasH, y: hiddenNodes[j].y });
-            }
-            const biasONode = { x: colBiasO, y: outputNodes[0].y };
+            defaults['bh'] = { x: colBiasIn, y: centerY };
+            defaults['bo'] = { x: colOutput, y: centerY - (radius + biasRadius + 30 * scale) };
 
-            // ---------- Draw edges: inputs -> hidden ----------
-            ctx.lineWidth = 1.3;
+            const P = {};
+            Object.keys(defaults).forEach(k => {
+                P[k] = (nodePositions[k]) ? { ...nodePositions[k] } : { ...defaults[k] };
+            });
+
+            lastLayout = { P, radius, biasRadius, inputs, hiddens };
+
+            const inputNodes = [];
+            for (let i = 0; i < inputs; i++) inputNodes.push(P[`x${i + 1}`]);
+            const hiddenNodes = [];
+            for (let j = 0; j < hiddens; j++) hiddenNodes.push(P[`h${j + 1}`]);
+            const outputNodes = [P['out']];
+            const biasHNode = P['bh'];
+            const biasONode = P['bo'];
+
+            const nodeFont = Math.round(15 * scale);
+            const edgeFont = Math.round(13 * scale);
+            const valueFont = Math.round(15 * scale);
+            const headerFont = Math.round(14 * scale);
+            const biasValueFont = Math.round(17 * scale);
+
+            // ---------- PHASE 1: edges ----------
+            ctx.lineWidth = 2.2 * scale;
+            ctx.strokeStyle = '#cbd5e0';
             for (let i = 0; i < inputs; i++) {
                 for (let j = 0; j < hiddens; j++) {
-                    const n1 = inputNodes[i];
-                    const n2 = hiddenNodes[j];
-                    ctx.strokeStyle = '#cbd5e0';
                     ctx.beginPath();
-                    ctx.moveTo(n1.x, n1.y);
-                    ctx.lineTo(n2.x, n2.y);
+                    ctx.moveTo(inputNodes[i].x, inputNodes[i].y);
+                    ctx.lineTo(hiddenNodes[j].x, hiddenNodes[j].y);
                     ctx.stroke();
-
-                    const mx = (n1.x + n2.x) / 2;
-                    const my = (n1.y + n2.y) / 2;
-                    drawEdgeLabel(ctx, `w${i + 1}${inputs + j + 1}`, mx, my, '#805ad5');
                 }
             }
-
-            // ---------- Draw edges: hidden -> output ----------
             for (let j = 0; j < hiddens; j++) {
-                const n1 = hiddenNodes[j];
-                const n2 = outputNodes[0];
-                ctx.strokeStyle = '#cbd5e0';
                 ctx.beginPath();
-                ctx.moveTo(n1.x, n1.y);
-                ctx.lineTo(n2.x, n2.y);
+                ctx.moveTo(hiddenNodes[j].x, hiddenNodes[j].y);
+                ctx.lineTo(outputNodes[0].x, outputNodes[0].y);
                 ctx.stroke();
-
-                const mx = (n1.x + n2.x) / 2;
-                const my = (n1.y + n2.y) / 2;
-                drawEdgeLabel(ctx, `w${inputs + j + 1}${inputs + hiddens + 1}`, mx, my, '#805ad5');
             }
 
-            // ---------- Draw edges: bias -> hidden (dashed green) ----------
-            ctx.setLineDash([5, 4]);
+            ctx.setLineDash([6 * scale, 4 * scale]);
             ctx.strokeStyle = '#68d391';
-            for (let j = 0; j < hiddens; j++) {
-                const nb = biasHNodes[j];
-                const nh = hiddenNodes[j];
+            ctx.lineWidth = 1.8 * scale;
+            for (let k = 0; k < hiddens; k++) {
                 ctx.beginPath();
-                ctx.moveTo(nb.x, nb.y);
-                ctx.lineTo(nh.x, nh.y);
+                ctx.moveTo(biasHNode.x, biasHNode.y);
+                ctx.lineTo(hiddenNodes[k].x, hiddenNodes[k].y);
                 ctx.stroke();
-
-                const mx = (nb.x + nh.x) / 2;
-                const my = (nb.y + nh.y) / 2;
-                drawEdgeLabel(ctx, `b${inputs + j + 1}`, mx, my - 10, '#2f855a', true);
             }
-            ctx.setLineDash([]);
-
-            // ---------- Draw edge: bias_o -> output ----------
-            ctx.setLineDash([5, 4]);
-            ctx.strokeStyle = '#68d391';
             ctx.beginPath();
             ctx.moveTo(biasONode.x, biasONode.y);
             ctx.lineTo(outputNodes[0].x, outputNodes[0].y);
             ctx.stroke();
-            const mxO = (biasONode.x + outputNodes[0].x) / 2;
-            drawEdgeLabel(ctx, `b${inputs + hiddens + 1}`, mxO, biasONode.y - 10, '#2f855a', true);
             ctx.setLineDash([]);
 
-            // ---------- Draw nodes ----------
+            // ---------- PHASE 2: labels ----------
+            for (let i = 0; i < inputs; i++) {
+                for (let j = 0; j < hiddens; j++) {
+                    const n1 = inputNodes[i];
+                    const n2 = hiddenNodes[j];
+                    const t = 0.40;
+                    const mx = n1.x + (n2.x - n1.x) * t;
+                    const my = n1.y + (n2.y - n1.y) * t;
+                    const dx = n2.x - n1.x;
+                    const dy = n2.y - n1.y;
+                    const len = Math.hypot(dx, dy) || 1;
+                    const px = -dy / len;
+                    const py =  dx / len;
+                    const off = ((j % 2 === 0) ? 1 : -1) * 6 * scale;
+                    drawEdgeLabel(ctx, `w${sub(j + 1)}${sub(i + 1)}${sup('(1)')}`,
+                                  mx + px * off, my + py * off, '#805ad5', false, edgeFont);
+                }
+            }
+            for (let j = 0; j < hiddens; j++) {
+                const n1 = hiddenNodes[j];
+                const n2 = outputNodes[0];
+                const t = 0.30;
+                const mx = n1.x + (n2.x - n1.x) * t;
+                const my = n1.y + (n2.y - n1.y) * t;
+                const dx = n2.x - n1.x;
+                const dy = n2.y - n1.y;
+                const len = Math.hypot(dx, dy) || 1;
+                const px = -dy / len;
+                const py =  dx / len;
+                const off = ((j % 2 === 0) ? 1 : -1) * 8 * scale;
+                drawEdgeLabel(ctx, `w${sub(1)}${sub(j + 1)}${sup('(2)')}`,
+                              mx + px * off, my + py * off, '#805ad5', false, edgeFont);
+            }
+
+            for (let j = 0; j < hiddens; j++) {
+                const n1 = biasHNode;
+                const n2 = hiddenNodes[j];
+                const t = 0.40;
+                const mx = n1.x + (n2.x - n1.x) * t;
+                const my = n1.y + (n2.y - n1.y) * t;
+                const dx = n2.x - n1.x;
+                const dy = n2.y - n1.y;
+                const len = Math.hypot(dx, dy) || 1;
+                const px = -dy / len;
+                const py =  dx / len;
+                const off = ((j % 2 === 0) ? 1 : -1) * 6 * scale;
+                drawEdgeLabel(ctx, `b${sub(j + 1)}${sub(1)}${sup('(1)')}`,
+                              mx + px * off, my + py * off, '#2f855a', true, edgeFont);
+            }
+
+            {
+                const n1 = biasONode;
+                const n2 = outputNodes[0];
+                const t = 0.45;
+                const mx = n1.x + (n2.x - n1.x) * t;
+                const my = n1.y + (n2.y - n1.y) * t;
+                drawEdgeLabel(ctx, `b${sub(1)}${sub(1)}${sup('(2)')}`,
+                              mx, my, '#2f855a', true, edgeFont);
+            }
+
+            // ---------- PHASE 3: nodes ----------
             inputNodes.forEach((node, i) => {
-                drawCircle(ctx, node.x, node.y, radius, '#4299e1', `x${i + 1}`);
+                drawCircle(ctx, node.x, node.y, radius, '#4299e1', `x${sub(i + 1)}`, nodeFont);
                 if (xVals) {
                     ctx.fillStyle = '#2b6cb0';
-                    ctx.font = 'bold 11px Arial';
+                    ctx.font = `bold ${valueFont}px Arial`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'top';
-                    ctx.fillText(xVals[i].toFixed(1), node.x, node.y + radius + 3);
+                    ctx.fillText(xVals[i].toFixed(1), node.x, node.y + radius + 5 * scale);
                 }
             });
             hiddenNodes.forEach((node, j) => {
-                drawCircle(ctx, node.x, node.y, radius, '#ed8936', `h${j + 1}`);
+                drawCircle(ctx, node.x, node.y, radius, '#ed8936', `h${sub(j + 1)}${sup('(1)')}`, nodeFont - 1);
                 if (hVals) {
                     ctx.fillStyle = '#c05621';
-                    ctx.font = 'bold 11px Arial';
+                    ctx.font = `bold ${valueFont}px Arial`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'top';
-                    ctx.fillText(hVals[j].toFixed(1), node.x, node.y + radius + 3);
+                    ctx.fillText(hVals[j].toFixed(1), node.x, node.y + radius + 5 * scale);
                 }
             });
-            drawCircle(ctx, outputNodes[0].x, outputNodes[0].y, radius, '#48bb78', 'ŷ');
+            drawCircle(ctx, outputNodes[0].x, outputNodes[0].y, radius, '#48bb78', 'ŷ', nodeFont + 2);
 
-            // Bias nodes — show constant value "1" inside, identifier below
-            biasHNodes.forEach((node, j) => {
-                drawBiasNode(ctx, node.x, node.y, biasRadius, '1', `b${inputs + j + 1}`);
-            });
-            drawBiasNode(ctx, biasONode.x, biasONode.y, biasRadius, '1', `b${inputs + hiddens + 1}`);
+            drawBiasNode(ctx, biasHNode.x, biasHNode.y, biasRadius, '1', biasValueFont);
+            drawBiasNode(ctx, biasONode.x, biasONode.y, biasRadius, '1', biasValueFont);
 
-            // Column headers
-            ctx.fillStyle = '#718096';
-            ctx.font = 'bold 11px Arial';
+            ctx.fillStyle = '#4a5568';
+            ctx.font = `bold ${headerFont}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'alphabetic';
-            ctx.fillText('Inputs', colInput, 20);
-            ctx.fillText('Bias (=1)', colBiasH, 20);
-            ctx.fillText('Hidden (ReLU)', colHidden, 20);
-            ctx.fillText('Bias (=1)', colBiasO, 20);
-            ctx.fillText('Output (σ)', colOutput, 20);
+            ctx.fillText('Layer 0 (Inputs)', colInput, headerY);
+            ctx.fillText('Bias (per layer)', colBiasIn, headerY);
+            ctx.fillText('Layer 1 (Hidden, ReLU)', colHidden, headerY);
+            ctx.fillText('Layer 2 (Output, σ)', colOutput, headerY);
         }
 
-        function drawCircle(ctx, x, y, r, fill, label) {
+        function drawCircle(ctx, x, y, r, fill, label, fontSize) {
             ctx.beginPath();
             ctx.arc(x, y, r, 0, 2 * Math.PI);
             ctx.fillStyle = fill;
             ctx.fill();
             ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             ctx.stroke();
 
             ctx.fillStyle = '#fff';
-            ctx.font = 'bold 11px Arial';
+            ctx.font = `bold ${fontSize || 14}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(label, x, y);
         }
 
-        // Bias node: value inside, identifier label below
-        function drawBiasNode(ctx, x, y, r, valueLabel, idLabel) {
+        function drawBiasNode(ctx, x, y, r, valueLabel, valueFont) {
             ctx.beginPath();
             ctx.arc(x, y, r, 0, 2 * Math.PI);
             ctx.fillStyle = '#c6f6d5';
             ctx.fill();
-            ctx.setLineDash([3, 3]);
+            ctx.setLineDash([5, 4]);
             ctx.strokeStyle = '#2f855a';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 2.5;
             ctx.stroke();
             ctx.setLineDash([]);
 
-            // Constant value "1" inside the node
             ctx.fillStyle = '#22543d';
-            ctx.font = 'bold 13px Arial';
+            ctx.font = `bold ${valueFont || 17}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(valueLabel, x, y);
-
-            // Identifier label below the node
-            ctx.fillStyle = '#2f855a';
-            ctx.font = 'bold 10px Arial';
-            ctx.textBaseline = 'top';
-            ctx.fillText(idLabel, x, y + r + 2);
         }
 
-        function drawEdgeLabel(ctx, text, x, y, color, isBias = false) {
-            ctx.font = 'bold 10px Arial';
+        function drawEdgeLabel(ctx, text, x, y, color, isBias = false, fontSize = 13) {
+            ctx.font = `bold ${fontSize}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             const metrics = ctx.measureText(text);
-            const padX = 3;
+            const padX = 5;
             const w = metrics.width + padX * 2;
-            const h = 12;
+            const h = fontSize + 5;
 
-            ctx.fillStyle = 'rgba(255,255,255,0.92)';
-            ctx.strokeStyle = isBias ? '#68d391' : '#cbd5e0';
-            ctx.lineWidth = 1;
-            roundRect(ctx, x - w / 2, y - h / 2, w, h, 3);
+            ctx.fillStyle = 'rgba(255,255,255,0.95)';
+            ctx.strokeStyle = isBias ? '#2f855a' : '#cbd5e0';
+            ctx.lineWidth = 1.4;
+            roundRect(ctx, x - w / 2, y - h / 2, w, h, 5);
             ctx.fill();
             ctx.stroke();
 
@@ -510,6 +941,97 @@
             ctx.quadraticCurveTo(x, y, x + r, y);
             ctx.closePath();
         }
+
+        /* ---------------- Drag support ---------------- */
+        const canvas = document.getElementById('networkCanvas');
+        let draggingKey = null;
+        let dragOffset = { x: 0, y: 0 };
+
+        function getCanvasCoords(evt) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = (evt.touches) ? evt.touches[0].clientX : evt.clientX;
+            const clientY = (evt.touches) ? evt.touches[0].clientY : evt.clientY;
+            const x = (clientX - rect.left) * (canvas.clientWidth / rect.width);
+            const y = (clientY - rect.top)  * (canvas.clientHeight / rect.height);
+            return { x, y };
+        }
+
+        function hitTest(x, y) {
+            if (!lastLayout) return null;
+            const { P, radius, biasRadius, inputs, hiddens } = lastLayout;
+
+            const realKeys = [];
+            for (let i = 0; i < inputs; i++) realKeys.push(`x${i + 1}`);
+            for (let j = 0; j < hiddens; j++) realKeys.push(`h${j + 1}`);
+            realKeys.push('out');
+            for (const k of realKeys) {
+                const p = P[k];
+                if (Math.hypot(x - p.x, y - p.y) <= radius + 6) return { key: k, r: radius };
+            }
+            for (const k of ['bh', 'bo']) {
+                const p = P[k];
+                if (Math.hypot(x - p.x, y - p.y) <= biasRadius + 6) return { key: k, r: biasRadius };
+            }
+            return null;
+        }
+
+        function beginDrag(evt) {
+            const { x, y } = getCanvasCoords(evt);
+            const hit = hitTest(x, y);
+            if (!hit) return;
+            draggingKey = hit.key;
+            const p = lastLayout.P[draggingKey];
+            dragOffset = { x: x - p.x, y: y - p.y };
+            canvas.classList.add('dragging');
+            evt.preventDefault();
+        }
+
+        function moveDrag(evt) {
+            if (!draggingKey) return;
+            const { x, y } = getCanvasCoords(evt);
+            const cssW = canvas.clientWidth;
+            const cssH = canvas.clientHeight;
+            const r = draggingKey.startsWith('b') ? lastLayout.biasRadius : lastLayout.radius;
+
+            const nx = Math.max(r + 4, Math.min(cssW - r - 4, x - dragOffset.x));
+            const ny = Math.max(r + 4, Math.min(cssH - r - 4, y - dragOffset.y));
+
+            nodePositions[draggingKey] = { x: nx, y: ny };
+            redrawOnly();
+            evt.preventDefault();
+        }
+
+        function endDrag(evt) {
+            if (!draggingKey) return;
+            draggingKey = null;
+            canvas.classList.remove('dragging');
+            if (evt) evt.preventDefault();
+        }
+
+        function redrawOnly() {
+            const inputs = parseInt(document.getElementById('input-count').value);
+            const hiddens = parseInt(document.getElementById('hidden-count').value);
+            const x = [];
+            for (let i = 0; i < inputs; i++) {
+                const el = document.getElementById(`input-val-${i}`);
+                x.push(el ? parseFloat(el.value) : 0.5);
+            }
+            const hVals = [];
+            for (let j = 0; j < hiddens; j++) {
+                let sum = 0;
+                for (let i = 0; i < inputs; i++) sum += x[i] * WEIGHTS.ih[i][j];
+                hVals.push(Math.max(0, sum + WEIGHTS.b_h[j]));
+            }
+            drawNetwork(inputs, hiddens, x, hVals);
+        }
+
+        canvas.addEventListener('mousedown', beginDrag);
+        window.addEventListener('mousemove', moveDrag);
+        window.addEventListener('mouseup', endDrag);
+        canvas.addEventListener('touchstart', beginDrag, { passive: false });
+        canvas.addEventListener('touchmove', moveDrag, { passive: false });
+        canvas.addEventListener('touchend', endDrag);
+        canvas.addEventListener('touchcancel', endDrag);
 
         /* Part B: 50-Question Interactive Quiz Module */
         const quizData = [
@@ -603,6 +1125,39 @@
             },
             {
                 topic: "Weights and Biases",
+                q: "In the notation w_ji^(l), which subscript identifies the destination neuron?",
+                options: [
+                    { text: "j — the first subscript identifies the destination neuron", correct: true, reason: "Correct! In this convention, j is the destination neuron in layer (l), and i is the source neuron in layer (l-1)." },
+                    { text: "i — the second subscript identifies the destination", correct: false, reason: "Incorrect. i identifies the source, not the destination." },
+                    { text: "Neither — subscripts are arbitrary", correct: false, reason: "Incorrect. Subscripts carry positional meaning." },
+                    { text: "Both — j and i both refer to destinations", correct: false, reason: "Incorrect. Each subscript refers to a different layer." }
+                ],
+                hint: "The first subscript tells you 'where the signal is going'."
+            },
+            {
+                topic: "Weights and Biases",
+                q: "How many bias nodes does a standard fully-connected layer have?",
+                options: [
+                    { text: "Exactly one bias node for the entire layer", correct: true, reason: "Correct! A single bias per layer contributes the same learnable constant to every neuron in the next layer, keeping parameter count minimal." },
+                    { text: "One bias node per neuron in the previous layer", correct: false, reason: "Incorrect. That would duplicate the same information many times." },
+                    { text: "One bias node per neuron in the next layer", correct: false, reason: "Incorrect. That's a common misconception — a single shared bias is sufficient because each destination neuron already has its own weights applied to all inputs." },
+                    { text: "No bias nodes at all", correct: false, reason: "Incorrect. Biases are essential for shifting the activation threshold." }
+                ],
+                hint: "Think about how many additional parameters you'd need to shift the threshold of every neuron in the layer."
+            },
+            {
+                topic: "Weights and Biases",
+                q: "How many bias weights does a single bias node contribute to a layer with N destination neurons?",
+                options: [
+                    { text: "N — one learnable bias weight per destination neuron", correct: true, reason: "Correct! The bias node's value of 1 is multiplied by a distinct weight for each neuron in the next layer, so it contributes N parameters." },
+                    { text: "1 — a single shared weight", correct: false, reason: "Incorrect. If all destination neurons shared a single weight, they would all receive the same additive constant, which is too restrictive." },
+                    { text: "N² — one weight per pair of neurons", correct: false, reason: "Incorrect. Bias weights are one per destination neuron, not per pair." },
+                    { text: "0 — bias is not weighted", correct: false, reason: "Incorrect. The bias contribution is learnable, so it is weighted." }
+                ],
+                hint: "Each neuron in the next layer can adjust its own bias contribution independently."
+            },
+            {
+                topic: "Weights and Biases",
                 q: "What is the primary role of a bias term in a neuron?",
                 options: [
                     { text: "To multiply the input data by zero", correct: false, reason: "Incorrect. Multiplying by zero would zero out the entire linear combination." },
@@ -636,14 +1191,14 @@
             },
             {
                 topic: "Weights and Biases",
-                q: "How does the bias node's update rule differ from a regular weight's update rule?",
+                q: "How does the bias weight's update rule differ from a regular weight's update rule?",
                 options: [
-                    { text: "The bias uses a constant input of 1 instead of x_i", correct: true, reason: "Correct! Delta b = eta * delta * 1, so the update depends only on the learning rate and blame." },
-                    { text: "The bias is never updated during training", correct: false, reason: "Incorrect. Biases are learned parameters and are updated every step." },
+                    { text: "The bias uses a constant input of 1 instead of the previous layer's activation", correct: true, reason: "Correct! Delta b_j1^(l) = eta * delta_j^(l) * 1, so the update depends only on the learning rate and blame." },
+                    { text: "The bias is never updated during training", correct: false, reason: "Incorrect. Bias weights are learned parameters and are updated every step." },
                     { text: "The bias update uses a different learning rate", correct: false, reason: "Incorrect. The same learning rate typically applies to weights and biases." },
                     { text: "The bias has no gradient", correct: false, reason: "Incorrect. Biases have gradients just like weights, just with input fixed at 1." }
                 ],
-                hint: "Compare Delta w = eta * delta * x_i with Delta b = eta * delta * ?"
+                hint: "Compare Delta w_ji^(l) = eta * delta_j^(l) * a_i^(l-1) with Delta b_j1^(l) = eta * delta_j^(l) * ?"
             },
             {
                 topic: "Forward Pass",
@@ -798,6 +1353,17 @@
                     { text: "The amount of training data available", correct: false, reason: "Incorrect. Dataset size is independent of the loss computation." }
                 ],
                 hint: "Loss tells you 'how bad' the current predictions are compared to the labels."
+            },
+            {
+                topic: "Loss Functions",
+                q: "In backpropagation, why do we use the derivative of the loss (δ) rather than the loss value L itself to update weights?",
+                options: [
+                    { text: "Because the gradient tells us the direction and rate to move each weight, while L is only a scalar summary of error", correct: true, reason: "Correct! L tells you how wrong you are, but ∂L/∂w tells you which way to nudge each weight to reduce that error." },
+                    { text: "Because L is not well-defined for classification problems", correct: false, reason: "Incorrect. L is perfectly well-defined; it just doesn't indicate the direction of the fix." },
+                    { text: "Because computing L is computationally expensive", correct: false, reason: "Incorrect. L is cheap to compute; the reason is mathematical, not computational." },
+                    { text: "Because L is always zero", correct: false, reason: "Incorrect. L is nonzero whenever the prediction differs from the truth." }
+                ],
+                hint: "Think about what information you need to nudge a weight up vs. down."
             },
             {
                 topic: "Overfitting & Regularization",
@@ -966,9 +1532,9 @@
             },
             {
                 topic: "Proportional Weight Updates",
-                q: "In the update rule Delta w = eta * delta * x, what does delta represent?",
+                q: "In the update rule Delta w_ji^(l) = eta * delta_j^(l) * a_i^(l-1), what does delta_j^(l) represent?",
                 options: [
-                    { text: "The error gradient at the neuron's output", correct: true, reason: "Correct! Delta is the local blame assigned to the neuron, propagated from the loss." },
+                    { text: "The error gradient at neuron j's output in layer l", correct: true, reason: "Correct! Delta_j^(l) is the local blame assigned to neuron j in layer l, propagated from the loss." },
                     { text: "The weight itself", correct: false, reason: "Incorrect. The weight is what we are updating, not the delta term." },
                     { text: "The number of training samples", correct: false, reason: "Incorrect. Sample count is unrelated to the local gradient term." },
                     { text: "The activation function", correct: false, reason: "Incorrect. The activation function shapes delta but is not delta itself." }
@@ -1078,7 +1644,7 @@
                 topic: "Proportional Weight Updates",
                 q: "If Delta w = 0 for a particular weight, what can we conclude?",
                 options: [
-                    { text: "Either the learning rate, delta, or input x (or a combination) is zero", correct: true, reason: "Correct! The product is zero if any factor is zero." },
+                    { text: "Either the learning rate, delta, or input activation (or a combination) is zero", correct: true, reason: "Correct! The product is zero if any factor is zero." },
                     { text: "The weight is already optimal", correct: false, reason: "Incorrect. Zero update may just mean zero input, not optimality." },
                     { text: "The network has converged", correct: false, reason: "Incorrect. Convergence requires all updates to be near zero, not just one." },
                     { text: "The bias must also be zero", correct: false, reason: "Incorrect. Bias is a separate parameter with its own update rule." }
@@ -1089,7 +1655,7 @@
                 topic: "Proportional Weight Updates",
                 q: "In a network with 3 inputs, 2 hidden nodes, and 1 output, how many weights connect the input layer to the hidden layer?",
                 options: [
-                    { text: "6", correct: true, reason: "Correct! 3 inputs × 2 hidden nodes = 6 weights (plus 2 biases for the hidden nodes)." },
+                    { text: "6", correct: true, reason: "Correct! 3 inputs × 2 hidden nodes = 6 weights (plus 2 bias weights)." },
                     { text: "3", correct: false, reason: "Incorrect. That is just the number of inputs, not the number of connections." },
                     { text: "2", correct: false, reason: "Incorrect. That is the number of hidden nodes." },
                     { text: "5", correct: false, reason: "Incorrect. 3 + 2 = 5, but weights are multiplicative connections, not sums." }
@@ -1111,7 +1677,7 @@
                 topic: "Proportional Weight Updates",
                 q: "What does it mean if a weight's update is consistently zero across all training samples?",
                 options: [
-                    { text: "The corresponding input feature is always zero", correct: true, reason: "Correct! If x = 0 for all samples, Delta w = eta * delta * 0 = 0 always." },
+                    { text: "The corresponding input feature is always zero", correct: true, reason: "Correct! If the input activation is 0 for all samples, Delta w = eta * delta * 0 = 0 always." },
                     { text: "The weight is perfectly optimal", correct: false, reason: "Incorrect. Zero update may simply mean the input is never active." },
                     { text: "The learning rate is too high", correct: false, reason: "Incorrect. Learning rate affects magnitude, not whether the update is zero." },
                     { text: "The network has too many layers", correct: false, reason: "Incorrect. Layer count does not force zero updates." }
