@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Networks Playground & Practice Exam</title>
+    <style>
+        :root {
+            --primary: #3182ce;
+            --primary-hover: #2b6cb0;
+            --bg: #f7fafc;
+            --card-bg: #ffffff;
+            --text: #2d3748;
+            --accent: #dd6b20;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: var(--text); max-width: 900px; margin: 0 auto; padding: 20px; background-color: var(--bg); }
+        h1, h2, h3 { color: #1a202c; }
+        .card { background: var(--card-bg); padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .formula { background: #edf2f7; padding: 15px; border-left: 5px solid var(--primary); font-family: monospace; border-radius: 4px; overflow-x: auto; font-size: 1.1em; }
+        .highlight { font-weight: bold; color: var(--primary-hover); }
+        .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .control-group { background: #edf2f7; padding: 12px; border-radius: 6px; }
+        .control-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em; }
+        .control-group select, .control-group input[type="range"] { width: 100%; padding: 5px; border-radius: 4px; border: 1px solid #cbd5e0; box-sizing: border-box; }
+        .sim-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media(max-width: 768px) { .sim-container { grid-template-columns: 1fr; } }
+        .canvas-container { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; display: flex; justify-content: center; align-items: center; min-height: 360px; }
+        canvas { max-width: 100%; height: auto; }
+        .math-panel { background: #1a202c; color: #aeecff; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 0.9em; overflow-y: auto; max-height: 360px; }
+        .math-panel h4 { color: #fff; margin-top: 0; border-bottom: 1px solid #4a5568; padding-bottom: 5px; }
+        .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: 0.85em; }
+        .legend span { display: inline-flex; align-items: center; gap: 5px; }
+        .swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .quiz-container { background: var(--card-bg); padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); border-top: 5px solid var(--primary); margin-top: 40px; }
+        .question-card { display: none; }
+        .question-card.active { display: block; }
+        .question-text { font-size: 1.15em; font-weight: 600; color: #2d3748; margin-bottom: 15px; }
+        .topic-tag { display: inline-block; background: #e2e8f0; color: #4a5568; padding: 3px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; margin-bottom: 10px; }
+        .options-list { list-style-type: none; padding: 0; }
+        .option-item { background: #f7fafc; border: 2px solid #e2e8f0; padding: 12px 15px; margin-bottom: 10px; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; }
+        .option-item:hover { background: #edf2f7; border-color: #cbd5e0; }
+        .option-item.selected { background: #ebf8ff; border-color: var(--primary); font-weight: bold; }
+        .hint-btn { background: none; border: none; color: #4a5568; text-decoration: underline; cursor: pointer; padding: 0; font-size: 0.9em; margin-bottom: 15px; display: block; }
+        .hint-text { display: none; background: #fffaf0; border: 1px dashed var(--accent); padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 0.9em; color: #7b341e; }
+        .quiz-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+        .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.95em; }
+        .btn:hover { background: var(--primary-hover); }
+        .btn:disabled { background: #cbd5e0; cursor: not-allowed; }
+        .progress-bar-container { background: #e2e8f0; width: 100%; height: 8px; border-radius: 4px; margin-bottom: 25px; overflow: hidden; }
+        .progress-bar { background: var(--primary); height: 100%; width: 0%; transition: width 0.3s ease; }
+        .results-screen { display: none; text-align: center; padding: 20px 0; }
+        .score-display { font-size: 2.5em; font-weight: bold; color: var(--primary); margin: 15px 0; }
+        .review-section { text-align: left; margin-top: 30px; max-height: 400px; overflow-y: auto; border: 1px solid #e2e8f0; padding: 15px; border-radius: 6px; background: #fafafa; }
+        .review-item { padding: 10px; border-bottom: 1px solid #e2e8f0; margin-bottom: 10px; font-size: 0.9em; }
+        .review-item.correct-rev { border-left: 4px solid #38a169; }
+        .review-item.incorrect-rev { border-left: 4px solid #e53e3e; }
+    </style>
+</head>
+<body>
+
+    <h1>Interactive Neural Network Blueprint & Playground</h1>
+    <p>Welcome! This interactive workspace lets you dynamically configure your network, watch a live forward propagation step pass signals linearly, and challenge your intuition with a complete 50-question fundamentals exam.</p>
+
+    <div class="card">
+        <h2>1. Live Network Topology Builder</h2>
+        <p>Configure your model setup below (At most 3 inputs, at most 2 hidden nodes, and a standard single binary output node). Bias nodes are drawn as dashed green circles and labeled b<sub>k</sub>. Weights are labeled w<sub>ij</sub> (from node i to node j) and biases on connections are shown as b<sub>j</sub>.</p>
+
+        <div class="controls-grid">
+            <div class="control-group">
+                <label for="input-count">Inputs Count (Max 3):</label>
+                <select id="input-count" onchange="updateNetworkStructure()">
+                    <option value="1">1 Input</option>
+                    <option value="2">2 Inputs</option>
+                    <option value="3" selected>3 Inputs</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="hidden-count">Hidden Nodes (Max 2):</label>
+                <select id="hidden-count" onchange="updateNetworkStructure()">
+                    <option value="1">1 Hidden Node</option>
+                    <option value="2" selected>2 Hidden Nodes</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="input-val">Adjust Active Signal Values:</label>
+                <input type="range" id="input-val" min="-1" max="1" step="0.1" value="0.5" oninput="updateNetworkStructure()">
+                <div style="font-size: 0.8em; text-align: center; margin-top: 2px;">Value: <span id="val-display">0.5</span></div>
+            </div>
+        </div>
+
+        <div class="sim-container">
+            <div class="canvas-container">
+                <canvas id="networkCanvas" width="480" height="380"></canvas>
+            </div>
+            <div class="math-panel" id="math-output">
+                <h4>Forward Pass Calculations</h4>
+                <div>Alter the controls to inspect mathematical scaling live...</div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <span><span class="swatch" style="background:#4299e1"></span> Input node</span>
+            <span><span class="swatch" style="background:#ed8936"></span> Hidden node</span>
+            <span><span class="swatch" style="background:#48bb78"></span> Output node</span>
+            <span><span class="swatch" style="background:#68d391; border:1px dashed #2f855a"></span> Bias node (b)</span>
+            <span><span class="swatch" style="background:#805ad5"></span> Weight label (w<sub>ij</sub>)</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>2. Conceptual Summary: Multiplicative Updates</h2>
+        <p>When computing errors backward, adjustments to any given parameter are driven by multi-variable interactions:</p>
+        <div class="formula">
+            Weight Adjustment (&Delta;w<sub>ij</sub>) = Learning Rate (&eta;) &times; Node Blame (&delta;<sub>j</sub>) &times; Input Signal (x<sub>i</sub>)
+        </div>
+        <p>This creates explicit operational rules of thumb:</p>
+        <ul>
+            <li>If two variables are stationary, parameters change in direct <strong>proportionality</strong> to the remaining item.</li>
+            <li>If a connection was dead or inactive (<code>x<sub>i</sub> = 0</code>), no update occurs.</li>
+            <li>If a hidden node uses a standard <strong>ReLU</strong> activation function (<code>max(0, z)</code>) and outputs 0, its blame score drops cleanly to zero, insulating its upstream path from updates during that cycle.</li>
+            <li>Bias weights (b<sub>j</sub>) are updated using the same rule, but with a constant input of <code>1</code> instead of <code>x<sub>i</sub></code>.</li>
+        </ul>
+    </div>
+
+    <div class="quiz-container" id="quiz-section">
+        <h2>🧠 3. Interactive Assessment Engine (50 Mock Questions)</h2>
+        <p id="quiz-intro">Validate your conceptual foundation below.</p>
+
+        <div class="progress-bar-container" id="progress-container">
+            <div class="progress-bar" id="bar"></div>
+        </div>
+
+        <div id="quiz-form"></div>
+
+        <div class="quiz-controls" id="controls">
+            <span id="question-counter">Question 1 of 50</span>
+            <button class="btn" id="next-btn" onclick="nextQuestion()" disabled>Next Question</button>
+        </div>
+
+        <div class="results-screen" id="results">
+            <h3>Exam Completed!</h3>
+            <div class="score-display" id="score">0 / 50</div>
+            <p id="feedback-message"></p>
+            <button class="btn" onclick="restartQuiz()">Retake Practice Exam</button>
+            <div class="review-section" id="review-list"></div>
+        </div>
+    </div>
+
+    <script>
+        /* Part A: Simulation Rendering Engine */
+
+        // Fixed weight/bias values so labels stay consistent and readable
+        const WEIGHTS = {
+            // input -> hidden: w_ih[i][j], i=1..3, j=1..2
+            ih: [
+                [0.4, -0.3],   // from x1
+                [0.5,  0.6],   // from x2
+                [-0.2, 0.7]    // from x3
+            ],
+            // hidden -> output: w_ho[j], j=1..2
+            ho: [0.5, -0.4],
+            // biases: b_h[j] for hidden nodes, b_o for output node
+            b_h: [0.1, -0.2],
+            b_o: -0.2
+        };
+
+        function updateNetworkStructure() {
+            const inputs = parseInt(document.getElementById('input-count').value);
+            const hiddens = parseInt(document.getElementById('hidden-count').value);
+            const activeVal = parseFloat(document.getElementById('input-val').value);
+            document.getElementById('val-display').innerText = activeVal.toFixed(1);
+
+            let mathHtml = `<h4>Forward Pass Trace</h4>`;
+            const hNodes = [];
+
+            mathHtml += `<strong>1. Inputs Loaded:</strong><br/>`;
+            for (let i = 1; i <= inputs; i++) {
+                mathHtml += ` &bull; x<sub>${i}</sub> = ${activeVal}<br/>`;
+            }
+            mathHtml += `<br/>`;
+
+            mathHtml += `<strong>2. Hidden Estimations (ReLU):</strong><br/>`;
+            for (let j = 1; j <= hiddens; j++) {
+                let sum = 0;
+                let terms = [];
+                for (let i = 1; i <= inputs; i++) {
+                    const w = WEIGHTS.ih[i - 1][j - 1];
+                    sum += activeVal * w;
+                    terms.push(`w<sub>${i}${inputs + j}</sub>&middot;x<sub>${i}</sub>`);
+                }
+                const b = WEIGHTS.b_h[j - 1];
+                const z = sum + b;
+                const a = Math.max(0, z);
+                hNodes.push(a);
+
+                mathHtml += ` &bull; z<sub>h${j}</sub> = ${terms.join(' + ')} + b<sub>${inputs + j}</sub><br/>`;
+                mathHtml += ` &nbsp;&nbsp; = ${sum.toFixed(3)} + (${b.toFixed(2)}) = ${z.toFixed(3)}<br/>`;
+                mathHtml += ` &bull; h<sub>${j}</sub> = ReLU(z<sub>h${j}</sub>) = <strong>${a.toFixed(3)}</strong><br/>`;
+            }
+
+            let outSum = 0;
+            let outTerms = [];
+            for (let j = 1; j <= hiddens; j++) {
+                const w = WEIGHTS.ho[j - 1];
+                outSum += hNodes[j - 1] * w;
+                outTerms.push(`w<sub>${inputs + j}${inputs + hiddens + 1}</sub>&middot;h<sub>${j}</sub>`);
+            }
+            const outputZ = outSum + WEIGHTS.b_o;
+            const finalProb = 1 / (1 + Math.exp(-outputZ));
+            const predClass = finalProb >= 0.5 ? 1 : 0;
+
+            mathHtml += `<br/><strong>3. Binary Classification (Sigmoid):</strong><br/>`;
+            mathHtml += ` &bull; z<sub>out</sub> = ${outTerms.join(' + ')} + b<sub>${inputs + hiddens + 1}</sub><br/>`;
+            mathHtml += ` &nbsp;&nbsp; = ${outSum.toFixed(3)} + (${WEIGHTS.b_o.toFixed(2)}) = ${outputZ.toFixed(3)}<br/>`;
+            mathHtml += ` &bull; Probability = &sigma;(z<sub>out</sub>) = <strong>${(finalProb * 100).toFixed(1)}%</strong><br/>`;
+            mathHtml += ` &bull; Final Decision &rarr; <span style='color:#fff; background:#2b6cb0; padding:2px 6px; border-radius:3px;'>Class ${predClass}</span>`;
+
+            document.getElementById('math-output').innerHTML = mathHtml;
+            drawNetwork(inputs, hiddens);
+        }
+
+        function drawNetwork(inputs, hiddens) {
+            const canvas = document.getElementById('networkCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const radius = 16;
+            const biasRadius = 12;
+
+            // Layout: 4 columns (inputs | bias_h | hidden | bias_o | output) — actually 5 x-positions
+            const colInput   = 70;
+            const colBiasH   = 175;
+            const colHidden  = 270;
+            const colBiasO   = 360;
+            const colOutput  = 435;
+
+            const layerGap = 62;
+
+            // Build node coordinate lists
+            const inputNodes = [];
+            const hiddenNodes = [];
+            const outputNodes = [];
+
+            const inTotalH = (inputs - 1) * layerGap;
+            const inStartY = (canvas.height - inTotalH) / 2;
+            for (let i = 0; i < inputs; i++) {
+                inputNodes.push({ x: colInput, y: inStartY + i * layerGap });
+            }
+
+            const hidTotalH = (hiddens - 1) * layerGap;
+            const hidStartY = (canvas.height - hidTotalH) / 2;
+            for (let j = 0; j < hiddens; j++) {
+                hiddenNodes.push({ x: colHidden, y: hidStartY + j * layerGap });
+            }
+
+            outputNodes.push({ x: colOutput, y: canvas.height / 2 });
+
+            // Bias nodes positioned between layers, vertically centered
+            const biasHNodes = [];
+            for (let j = 0; j < hiddens; j++) {
+                // Each hidden node gets its own bias node slightly offset toward it
+                biasHNodes.push({ x: colBiasH, y: hiddenNodes[j].y });
+            }
+            const biasONode = { x: colBiasO, y: outputNodes[0].y };
+
+            // ---------- Draw edges: inputs -> hidden ----------
+            ctx.lineWidth = 1.3;
+            for (let i = 0; i < inputs; i++) {
+                for (let j = 0; j < hiddens; j++) {
+                    const n1 = inputNodes[i];
+                    const n2 = hiddenNodes[j];
+                    ctx.strokeStyle = '#cbd5e0';
+                    ctx.beginPath();
+                    ctx.moveTo(n1.x, n1.y);
+                    ctx.lineTo(n2.x, n2.y);
+                    ctx.stroke();
+
+                    // Weight label w_{i}{inputs+j}
+                    const mx = (n1.x + n2.x) / 2;
+                    const my = (n1.y + n2.y) / 2;
+                    drawEdgeLabel(ctx, `w${i + 1}${inputs + j}`, mx, my, '#805ad5');
+                }
+            }
+
+            // ---------- Draw edges: hidden -> output ----------
+            for (let j = 0; j < hiddens; j++) {
+                const n1 = hiddenNodes[j];
+                const n2 = outputNodes[0];
+                ctx.strokeStyle = '#cbd5e0';
+                ctx.beginPath();
+                ctx.moveTo(n1.x, n1.y);
+                ctx.lineTo(n2.x, n2.y);
+                ctx.stroke();
+
+                const mx = (n1.x + n2.x) / 2;
+                const my = (n1.y + n2.y) / 2;
+                drawEdgeLabel(ctx, `w${inputs + j + 1}${inputs + hiddens + 1}`, mx, my, '#805ad5');
+            }
+
+            // ---------- Draw edges: bias -> hidden ----------
+            ctx.setLineDash([5, 4]);
+            ctx.strokeStyle = '#68d391';
+            for (let j = 0; j < hiddens; j++) {
+                const nb = biasHNodes[j];
+                const nh = hiddenNodes[j];
+                ctx.beginPath();
+                ctx.moveTo(nb.x, nb.y);
+                ctx.lineTo(nh.x, nh.y);
+                ctx.stroke();
+
+                const mx = (nb.x + nh.x) / 2;
+                const my = (nb.y + nh.y) / 2;
+                drawEdgeLabel(ctx, `b${inputs + j + 1}`, mx, my - 10, '#2f855a', true);
+            }
+            ctx.setLineDash([]);
+
+            // ---------- Draw edge: bias_o -> output ----------
+            ctx.setLineDash([5, 4]);
+            ctx.strokeStyle = '#68d391';
+            ctx.beginPath();
+            ctx.moveTo(biasONode.x, biasONode.y);
+            ctx.lineTo(outputNodes[0].x, outputNodes[0].y);
+            ctx.stroke();
+            const mxO = (biasONode.x + outputNodes[0].x) / 2;
+            drawEdgeLabel(ctx, `b${inputs + hiddens + 1}`, mxO, biasONode.y - 10, '#2f855a', true);
+            ctx.setLineDash([]);
+
+            // ---------- Draw nodes ----------
+            inputNodes.forEach((node, i) => {
+                drawCircle(ctx, node.x, node.y, radius, '#4299e1', `x${i + 1}`);
+            });
+            hiddenNodes.forEach((node, j) => {
+                drawCircle(ctx, node.x, node.y, radius, '#ed8936', `h${j + 1}`);
+            });
+            outputNodes.forEach(() => {
+                drawCircle(ctx, outputNodes[0].x, outputNodes[0].y, radius, '#48bb78', 'ŷ');
+            });
+
+            // Bias nodes (dashed border, smaller)
+            biasHNodes.forEach((node, j) => {
+                drawBiasCircle(ctx, node.x, node.y, biasRadius, `b${inputs + j + 1}`);
+            });
+            drawBiasCircle(ctx, biasONode.x, biasONode.y, biasRadius, `b${inputs + hiddens + 1}`);
+
+            // Column headers
+            ctx.fillStyle = '#718096';
+            ctx.font = 'bold 11px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Inputs', colInput, 20);
+            ctx.fillText('Bias', colBiasH, 20);
+            ctx.fillText('Hidden (ReLU)', colHidden, 20);
+            ctx.fillText('Bias', colBiasO, 20);
+            ctx.fillText('Output (σ)', colOutput, 20);
+        }
+
+        function drawCircle(ctx, x, y, r, fill, label) {
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, 2 * Math.PI);
+            ctx.fillStyle = fill;
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 11px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, x, y);
+        }
+
+        function drawBiasCircle(ctx, x, y, r, label) {
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, 2 * Math.PI);
+            ctx.fillStyle = '#c6f6d5';
+            ctx.fill();
+            ctx.setLineDash([3, 3]);
+            ctx.strokeStyle = '#2f855a';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = '#22543d';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, x, y);
+        }
+
+        function drawEdgeLabel(ctx, text, x, y, color, isBias = false) {
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const metrics = ctx.measureText(text);
+            const padX = 3;
+            const w = metrics.width + padX * 2;
+            const h = 12;
+
+            // White pill background for readability
+            ctx.fillStyle = 'rgba(255,255,255,0.92)';
+            ctx.strokeStyle = isBias ? '#68d391' : '#cbd5e0';
+            ctx.lineWidth = 1;
+            roundRect(ctx, x - w / 2, y - h / 2, w, h, 3);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = color;
+            ctx.fillText(text, x, y + 0.5);
+        }
+
+        function roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+
+        /* Part B: 50-Question Interactive Quiz Module */
+        const quizData = [
+            {
+                topic: "Neural Network Architecture",
+                q: "What is the fundamental building block of an artificial neural network, inspired by the biological brain?",
+                options: [
+                    { text: "A perceptron or artificial neuron", correct: true, reason: "Correct! A perceptron takes inputs, applies weights and a bias, passes the result through an activation function, and produces an output." },
+                    { text: "A decision tree node", correct: false, reason: "Incorrect. Decision trees split data based on feature thresholds, which is a different machine learning concept." },
+                    { text: "A relational database table", correct: false, reason: "Incorrect. Tables store structured data and are not computing units of a neural network." },
+                    { text: "A linear regression vector", correct: false, reason: "Incorrect. While a single neuron can perform linear regression computations, the vector itself is just an array of numbers." }
+                ],
+                hint: "Think of the singular computational unit named after its invention in the 1950s, combining 'perception' and 'neuron'."
+            },
+            {
+                topic: "Neural Network Architecture",
+                q: "Which layer in a neural network receives the initial raw data, such as the pixels of an image?",
+                options: [
+                    { text: "The output layer", correct: false, reason: "Incorrect. The output layer provides the final prediction or result of the network." },
+                    { text: "The input layer", correct: true, reason: "Correct! The input layer acts as the entry point for the network, where each node corresponds to a specific feature in the data." },
+                    { text: "The hidden layer", correct: false, reason: "Incorrect. Hidden layers process intermediate representations between the input and output layers." },
+                    { text: "The loss layer", correct: false, reason: "Incorrect. The loss layer calculates error, not the entry point for raw features." }
+                ],
+                hint: "This layer 'takes in' the data from the external world before any transformation happens."
+            },
+            {
+                topic: "Neural Network Architecture",
+                q: "What makes a layer a 'hidden layer' in a neural network?",
+                options: [
+                    { text: "It is encrypted for security purposes.", correct: false, reason: "Incorrect. Hidden layers have nothing to do with data encryption." },
+                    { text: "It only functions when the model is offline.", correct: false, reason: "Incorrect. Hidden layers operate during both training and inference." },
+                    { text: "It contains random numbers that the user cannot view.", correct: false, reason: "Incorrect. The weights and outputs of hidden layers can be inspected; they are not hidden for lack of visibility." },
+                    { text: "It is positioned between the input and output layers, meaning its values are not directly observed in the dataset.", correct: true, reason: "Correct! Hidden layers extract internal feature representations that are not part of the raw input or the target output." }
+                ],
+                hint: "Consider where this layer sits relative to the data you provide and the final prediction you receive."
+            },
+            {
+                topic: "Neural Network Architecture",
+                q: "What does 'deep' mean in 'deep learning'?",
+                options: [
+                    { text: "Having multiple hidden layers stacked sequentially", correct: true, reason: "Correct! A 'deep' network has more than one hidden layer, allowing it to learn hierarchical, complex patterns." },
+                    { text: "Using a very large dataset for training", correct: false, reason: "Incorrect. Large datasets aid training, but depth refers specifically to the network architecture's number of layers." },
+                    { text: "Processing information with slow computational speed", correct: false, reason: "Incorrect. Depth refers to structural layers, not processing speed." },
+                    { text: "Requiring philosophical interpretation of results", correct: false, reason: "Incorrect. Deep learning is a mathematical and statistical modeling technique." }
+                ],
+                hint: "Think about physical depth or stacking things on top of one another in columns or rows."
+            },
+            {
+                topic: "Neural Network Architecture",
+                q: "In a fully connected (dense) layer, how are the nodes connected to the previous layer?",
+                options: [
+                    { text: "Only adjacent nodes in a circle are connected.", correct: false, reason: "Incorrect. Fully connected layers do not restrict connections to circular adjacency." },
+                    { text: "Every node connects only to the single strongest node in the prior layer.", correct: false, reason: "Incorrect. Connections are structural, independent of strength during initialization." },
+                    { text: "Every single node in the current layer is connected to every single node in the previous layer.", correct: true, reason: "Correct! Every node receives input from all nodes of the preceding layer, each via a unique weight." },
+                    { text: "Nodes are not connected at all; they share a global memory pool.", correct: false, reason: "Incorrect. Explicit weight connections exist between individual neurons." }
+                ],
+                hint: "The word 'fully' tells you that no connections are left out between the two layers."
+            },
+            {
+                topic: "Neural Network Architecture",
+                q: "What is the purpose of the output layer in a classification neural network?",
+                options: [
+                    { text: "To normalize the dataset before feature extraction", correct: false, reason: "Incorrect. Normalization typically occurs during data preprocessing before the input layer." },
+                    { text: "To store raw historical records of inputs", correct: false, reason: "Incorrect. Neural networks transform data to make predictions, not act as a lookup database." },
+                    { text: "To randomly reinitialize weights if the network stalls", correct: false, reason: "Incorrect. Weight initialization happens at the start, not dynamically as a layer function." },
+                    { text: "To produce the final class probabilities or decision categories", correct: true, reason: "Correct! The output layer translates the final hidden representation into the requested classification outcomes." }
+                ],
+                hint: "This is the very last destination of data flow through the forward pass."
+            },
+            {
+                topic: "Neural Network Architecture",
+                q: "If an input image has dimensions 28x28 pixels flattened into a vector, how many neurons must the input layer have?",
+                options: [
+                    { text: "784 neurons", correct: true, reason: "Correct! 28 multiplied by 28 equals 784 individual pixel values, requiring 784 input nodes." },
+                    { text: "56 neurons", correct: false, reason: "Incorrect. 56 is the sum of 28 and 28, whereas flat pixels require the product of dimensions." },
+                    { text: "28 neurons", correct: false, reason: "Incorrect. 28 would only represent a single row or column of the image." },
+                    { text: "1000 neurons", correct: false, reason: "Incorrect. 1000 is an arbitrary number unrelated to 28 times 28." }
+                ],
+                hint: "Calculate the total number of pixels by multiplying the width by the height (28 x 28)."
+            },
+            {
+                topic: "Weights and Biases",
+                q: "What do weights represent in an artificial neural network?",
+                options: [
+                    { text: "The physical weight of the computer hardware running the model", correct: false, reason: "Incorrect. Weights are software parameters, not physical hardware weight." },
+                    { text: "The importance or strength of the connection between two neurons", correct: true, reason: "Correct! Higher weights amplify the signal from a given input, while lower or negative weights suppress it." },
+                    { text: "The total number of hidden layers in the network", correct: false, reason: "Incorrect. That describes network depth/architecture, not connection weights." },
+                    { text: "The learning rate used during optimization", correct: false, reason: "Incorrect. Learning rate is a hyperparameter, whereas weights are learned parameters." }
+                ],
+                hint: "Think of weights as a multiplier that scales how much attention a neuron pays to a specific input."
+            },
+            {
+                topic: "Weights and Biases",
+                q: "What is the primary role of a bias term in a neuron?",
+                options: [
+                    { text: "To multiply the input data by zero", correct: false, reason: "Incorrect. Multiplying by zero would zero out the entire linear combination." },
+                    { text: "To slow down training so the model doesn't overfit", correct: false, reason: "Incorrect. Regularization methods prevent overfitting, not the bias parameter itself." },
+                    { text: "To shift the activation function's threshold left or right, allowing flexibility even when inputs are zero", correct: true, reason: "Correct! Bias acts like the intercept in linear equations (y = mx + b), allowing the neuron to fire or activate independently of input magnitudes." },
+                    { text: "To measure the accuracy of the final predictions", correct: false, reason: "Incorrect. Loss or accuracy metrics measure performance, not the bias parameter." }
+                ],
+                hint: "Think of it as a constant value added to the weighted sum, similar to the b in y = mx + b."
+            },
+            {
+                topic: "Weights and Biases",
+                q: "If all inputs to a neuron are equal to 0, what value determines the output of the linear combination step before activation?",
+                options: [
+                    { text: "The highest weight value", correct: false, reason: "Incorrect. Weights are multiplied by inputs, so 0 times any weight is 0." },
+                    { text: "Zero, always", correct: false, reason: "Incorrect. The bias term is still added even if inputs are zero." },
+                    { text: "The bias value itself", correct: true, reason: "Correct! Since inputs are 0, sum(w * x) = 0. Adding the bias leaves just the bias value: 0 + b = b." },
+                    { text: "The learning rate", correct: false, reason: "Incorrect. Learning rate scales updates, it is not part of the active forward sum." }
+                ],
+                hint: "Write out z = w1x1 + w2x2 + b and substitute x1 = 0, x2 = 0. What remains?"
+            }
+        ];
+
+        const extraTopics = [
+            {
+                topic: "Activation Functions",
+                q: "What is the primary purpose of an activation function in a neural network?",
+                options: [
+                    { text: "To introduce non-linearity so the network can learn complex patterns", correct: true, reason: "Correct! Without non-linear activation functions, even a deep network collapses into a single linear transformation." },
+                    { text: "To normalize the input data to a 0-1 range", correct: false, reason: "Incorrect. Normalization is a preprocessing step, not the role of activation functions." },
+                    { text: "To count the number of layers in the network", correct: false, reason: "Incorrect. Layer counting is an architectural property, not an activation function role." },
+                    { text: "To store the weights between training epochs", correct: false, reason: "Incorrect. Weights are stored independently of activation functions." }
+                ],
+                hint: "Think about what happens if every neuron just computes a weighted sum — the whole network becomes one big linear equation."
+            },
+            {
+                topic: "Activation Functions",
+                q: "What does the ReLU activation function output for a negative input?",
+                options: [
+                    { text: "Zero", correct: true, reason: "Correct! ReLU is defined as max(0, z), so any negative input yields exactly 0." },
+                    { text: "The input itself", correct: false, reason: "Incorrect. That describes a linear activation, not ReLU." },
+                    { text: "A small positive value like 0.01", correct: false, reason: "Incorrect. That describes Leaky ReLU, not standard ReLU." },
+                    { text: "It throws an error", correct: false, reason: "Incorrect. ReLU handles negative inputs gracefully by outputting 0." }
+                ],
+                hint: "ReLU stands for Rectified Linear Unit. 'Rectified' means negative values are clipped to zero."
+            },
+            {
+                topic: "Activation Functions",
+                q: "Which activation function is most commonly used in the output layer for binary classification?",
+                options: [
+                    { text: "ReLU", correct: false, reason: "Incorrect. ReLU outputs unbounded positive values, not probabilities." },
+                    { text: "Sigmoid", correct: true, reason: "Correct! Sigmoid squashes its input into the (0, 1) range, producing a probability-like output." },
+                    { text: "Linear", correct: false, reason: "Incorrect. Linear output is unbounded and not suitable for binary probability estimation." },
+                    { text: "Softmax", correct: false, reason: "Incorrect. Softmax is typically used for multi-class classification, not binary." }
+                ],
+                hint: "You want an output between 0 and 1 that can be interpreted as a probability."
+            },
+            {
+                topic: "Activation Functions",
+                q: "What is the vanishing gradient problem?",
+                options: [
+                    { text: "When gradients become extremely small during backpropagation, preventing deep layers from learning", correct: true, reason: "Correct! Sigmoid and tanh saturate at their extremes, causing gradients to shrink toward zero as they propagate backward." },
+                    { text: "When the learning rate is set too high and the model diverges", correct: false, reason: "Incorrect. That describes divergence, not vanishing gradients." },
+                    { text: "When the dataset is too small to train on", correct: false, reason: "Incorrect. Dataset size is unrelated to the vanishing gradient phenomenon." },
+                    { text: "When weights are initialized to zero", correct: false, reason: "Incorrect. Zero initialization causes symmetry problems, not vanishing gradients." }
+                ],
+                hint: "Think about what happens to gradients when you multiply many small numbers together repeatedly."
+            },
+            {
+                topic: "Forward Pass",
+                q: "In the forward pass, what is computed first for a single neuron?",
+                options: [
+                    { text: "The weighted sum of inputs plus bias", correct: true, reason: "Correct! The linear combination z = sum(w_i * x_i) + b is computed before applying the activation function." },
+                    { text: "The activation function output", correct: false, reason: "Incorrect. Activation is applied after the linear combination." },
+                    { text: "The loss value", correct: false, reason: "Incorrect. Loss is computed at the end of the forward pass, after the output layer." },
+                    { text: "The gradient of the weights", correct: false, reason: "Incorrect. Gradients are computed during backpropagation, not the forward pass." }
+                ],
+                hint: "Follow the order: inputs → weighted sum → activation → output."
+            },
+            {
+                topic: "Forward Pass",
+                q: "If a neuron has inputs [1, 2], weights [0.5, -0.5], and bias 1, what is the pre-activation value z?",
+                options: [
+                    { text: "0.5", correct: true, reason: "Correct! z = (1 * 0.5) + (2 * -0.5) + 1 = 0.5 - 1 + 1 = 0.5." },
+                    { text: "-0.5", correct: false, reason: "Incorrect. Recalculate: 0.5 - 1 + 1 = 0.5, not -0.5." },
+                    { text: "1.5", correct: false, reason: "Incorrect. Check the sign of the second weight: 2 * -0.5 = -1." },
+                    { text: "2.0", correct: false, reason: "Incorrect. The bias is +1, and the weighted sum is 0.5 - 1 = -0.5, so z = 0.5." }
+                ],
+                hint: "z = (x1 * w1) + (x2 * w2) + b. Plug in the numbers carefully."
+            },
+            {
+                topic: "Forward Pass",
+                q: "What is the output of a sigmoid function when the input z = 0?",
+                options: [
+                    { text: "0.5", correct: true, reason: "Correct! Sigmoid(0) = 1 / (1 + e^0) = 1 / (1 + 1) = 0.5." },
+                    { text: "0", correct: false, reason: "Incorrect. Sigmoid never outputs exactly 0; it asymptotes toward 0 for very negative inputs." },
+                    { text: "1", correct: false, reason: "Incorrect. Sigmoid approaches 1 for very positive inputs, not at z = 0." },
+                    { text: "-1", correct: false, reason: "Incorrect. Sigmoid outputs are always between 0 and 1." }
+                ],
+                hint: "Sigmoid is symmetric around z = 0. What value lies exactly in the middle of 0 and 1?"
+            },
+            {
+                topic: "Backpropagation",
+                q: "What is the primary goal of backpropagation?",
+                options: [
+                    { text: "To compute the gradient of the loss with respect to each weight", correct: true, reason: "Correct! Backprop applies the chain rule to efficiently compute gradients for all parameters." },
+                    { text: "To randomly initialize the weights", correct: false, reason: "Incorrect. Initialization happens before training, not during backpropagation." },
+                    { text: "To increase the number of hidden layers", correct: false, reason: "Incorrect. Architecture is fixed before training; backprop doesn't change it." },
+                    { text: "To normalize the input data", correct: false, reason: "Incorrect. Normalization is a preprocessing step." }
+                ],
+                hint: "Backpropagation is fundamentally about computing derivatives efficiently."
+            },
+            {
+                topic: "Backpropagation",
+                q: "According to the chain rule, the gradient of the loss with respect to a weight depends on which factors?",
+                options: [
+                    { text: "The gradient of the loss w.r.t. the neuron output, the activation derivative, and the input to the weight", correct: true, reason: "Correct! These three multiplicative factors form the core of the backprop update rule." },
+                    { text: "Only the learning rate", correct: false, reason: "Incorrect. The learning rate scales the update but is not the gradient itself." },
+                    { text: "The number of epochs completed", correct: false, reason: "Incorrect. Epoch count does not appear in the gradient computation." },
+                    { text: "The size of the training batch only", correct: false, reason: "Incorrect. Batch size affects averaging, not the chain rule factors." }
+                ],
+                hint: "Think of the multiplicative chain: loss → output → pre-activation → weight."
+            },
+            {
+                topic: "Gradient Descent",
+                q: "In gradient descent, how is a weight updated?",
+                options: [
+                    { text: "w_new = w_old - learning_rate * gradient", correct: true, reason: "Correct! We move opposite to the gradient to minimize the loss." },
+                    { text: "w_new = w_old + learning_rate * gradient", correct: false, reason: "Incorrect. Adding the gradient would move toward higher loss, not lower." },
+                    { text: "w_new = w_old * learning_rate", correct: false, reason: "Incorrect. This ignores the gradient entirely." },
+                    { text: "w_new = gradient / learning_rate", correct: false, reason: "Incorrect. This is not the gradient descent update rule." }
+                ],
+                hint: "To minimize a function, you step in the direction opposite to its gradient."
+            },
+            {
+                topic: "Gradient Descent",
+                q: "What happens if the learning rate is set too high?",
+                options: [
+                    { text: "The model may overshoot the minimum and diverge", correct: true, reason: "Correct! Large steps can bounce around the loss surface and even increase the loss over time." },
+                    { text: "Training will always converge faster", correct: false, reason: "Incorrect. Too high a rate often prevents convergence entirely." },
+                    { text: "The gradients will become zero", correct: false, reason: "Incorrect. Gradients depend on the loss surface, not directly on the learning rate." },
+                    { text: "The network will automatically reduce its depth", correct: false, reason: "Incorrect. Architecture is fixed; learning rate only affects parameter updates." }
+                ],
+                hint: "Imagine taking huge steps down a narrow valley — you might jump right over the bottom."
+            },
+            {
+                topic: "Gradient Descent",
+                q: "What is the difference between batch gradient descent and stochastic gradient descent (SGD)?",
+                options: [
+                    { text: "Batch uses the full dataset per update; SGD uses one sample (or a small batch) per update", correct: true, reason: "Correct! Batch GD computes the exact gradient over all data; SGD approximates it with subsets, adding noise but speeding up iteration." },
+                    { text: "SGD always converges to a better solution", correct: false, reason: "Incorrect. SGD can oscillate and may not reach the exact minimum, though it often generalizes well." },
+                    { text: "Batch GD cannot be used with neural networks", correct: false, reason: "Incorrect. Batch GD is applicable but often too slow for large datasets." },
+                    { text: "SGD requires no learning rate", correct: false, reason: "Incorrect. SGD still requires a learning rate hyperparameter." }
+                ],
+                hint: "Think about the trade-off between accuracy of the gradient and speed of computation per step."
+            },
+            {
+                topic: "Loss Functions",
+                q: "Which loss function is most appropriate for binary classification?",
+                options: [
+                    { text: "Binary cross-entropy", correct: true, reason: "Correct! Binary cross-entropy measures the divergence between predicted probabilities and true binary labels." },
+                    { text: "Mean squared error", correct: false, reason: "Incorrect. MSE is more common for regression; it can work but cross-entropy is standard for classification." },
+                    { text: "Categorical cross-entropy", correct: false, reason: "Incorrect. That is used for multi-class problems with one-hot labels." },
+                    { text: "Hinge loss", correct: false, reason: "Incorrect. Hinge is used for SVM-style margin maximization, not standard neural network classification." }
+                ],
+                hint: "You are predicting a probability between 0 and 1 for two classes. Which loss measures probability divergence?"
+            },
+            {
+                topic: "Loss Functions",
+                q: "What does the loss function measure?",
+                options: [
+                    { text: "The discrepancy between the model's predictions and the true targets", correct: true, reason: "Correct! Loss quantifies how wrong the model is; training aims to minimize it." },
+                    { text: "The number of parameters in the network", correct: false, reason: "Incorrect. Parameter count is an architectural property." },
+                    { text: "The speed of the forward pass", correct: false, reason: "Incorrect. Computational speed is unrelated to the loss value." },
+                    { text: "The amount of training data available", correct: false, reason: "Incorrect. Dataset size is independent of the loss computation." }
+                ],
+                hint: "Loss tells you 'how bad' the current predictions are compared to the labels."
+            },
+            {
+                topic: "Overfitting & Regularization",
+                q: "What is overfitting in a neural network?",
+                options: [
+                    { text: "When the model performs well on training data but poorly on unseen data", correct: true, reason: "Correct! Overfitting means the model memorized training noise instead of learning generalizable patterns." },
+                    { text: "When the model performs poorly on both training and test data", correct: false, reason: "Incorrect. That describes underfitting." },
+                    { text: "When the network has too few parameters", correct: false, reason: "Incorrect. Overfitting is associated with excessive model capacity relative to data." },
+                    { text: "When the learning rate is too low", correct: false, reason: "Incorrect. A low learning rate slows training but does not cause overfitting." }
+                ],
+                hint: "Think about the gap between training accuracy and validation accuracy."
+            },
+            {
+                topic: "Overfitting & Regularization",
+                q: "Which technique helps prevent overfitting by randomly dropping neurons during training?",
+                options: [
+                    { text: "Dropout", correct: true, reason: "Correct! Dropout randomly zeros neuron activations during training, forcing the network to learn redundant representations." },
+                    { text: "Batch normalization", correct: false, reason: "Incorrect. Batch norm stabilizes and speeds up training but is not primarily a regularization method." },
+                    { text: "Data augmentation", correct: false, reason: "Incorrect. Augmentation increases effective dataset size, which helps, but the question describes dropout." },
+                    { text: "Early stopping", correct: false, reason: "Incorrect. Early stopping halts training when validation loss rises; it does not randomly drop neurons." }
+                ],
+                hint: "The name suggests removing units during training."
+            },
+            {
+                topic: "Overfitting & Regularization",
+                q: "What is L2 regularization also known as?",
+                options: [
+                    { text: "Weight decay", correct: true, reason: "Correct! L2 regularization adds a penalty proportional to the square of weights, effectively decaying them toward zero." },
+                    { text: "Dropout", correct: false, reason: "Incorrect. Dropout is a separate regularization technique." },
+                    { text: "Data augmentation", correct: false, reason: "Incorrect. Augmentation transforms input data, not weights." },
+                    { text: "Batch normalization", correct: false, reason: "Incorrect. Batch norm normalizes layer inputs, not weights directly." }
+                ],
+                hint: "L2 adds a penalty on the sum of squared weights, which shrinks them."
+            },
+            {
+                topic: "Optimization",
+                q: "What does the Adam optimizer combine?",
+                options: [
+                    { text: "Momentum and RMSProp", correct: true, reason: "Correct! Adam uses moving averages of both gradients (momentum) and squared gradients (RMSProp)." },
+                    { text: "SGD and batch normalization", correct: false, reason: "Incorrect. Batch norm is a layer operation, not an optimizer component." },
+                    { text: "Dropout and weight decay", correct: false, reason: "Incorrect. These are regularization techniques, not optimizer components." },
+                    { text: "ReLU and sigmoid", correct: false, reason: "Incorrect. These are activation functions, not optimizer components." }
+                ],
+                hint: "Adam stands for Adaptive Moment Estimation. What two moment estimates does it track?"
+            },
+            {
+                topic: "Optimization",
+                q: "What is the purpose of momentum in gradient descent?",
+                options: [
+                    { text: "To accelerate convergence by accumulating past gradients", correct: true, reason: "Correct! Momentum smooths updates and helps escape shallow local minima." },
+                    { text: "To increase the learning rate linearly", correct: false, reason: "Incorrect. Momentum does not simply scale the learning rate." },
+                    { text: "To randomly perturb weights", correct: false, reason: "Incorrect. That would be noise injection, not momentum." },
+                    { text: "To compute the exact Hessian matrix", correct: false, reason: "Incorrect. Momentum is a first-order method; it does not compute second derivatives." }
+                ],
+                hint: "Think of a ball rolling downhill — it builds up speed as it goes."
+            },
+            {
+                topic: "Data Preprocessing",
+                q: "Why is it important to normalize input features before training a neural network?",
+                options: [
+                    { text: "It helps gradients flow more uniformly and speeds up convergence", correct: true, reason: "Correct! Features on different scales can cause uneven gradient updates and slow training." },
+                    { text: "It reduces the number of parameters", correct: false, reason: "Incorrect. Normalization does not change the number of weights or biases." },
+                    { text: "It guarantees the model will not overfit", correct: false, reason: "Incorrect. Normalization helps training but does not prevent overfitting by itself." },
+                    { text: "It converts the problem into a linear one", correct: false, reason: "Incorrect. Normalization is an affine transform; it does not remove non-linearity." }
+                ],
+                hint: "Imagine one feature ranges 0-1 and another ranges 0-1,000,000. How would that affect gradient updates?"
+            },
+            {
+                topic: "Data Preprocessing",
+                q: "What is one-hot encoding used for?",
+                options: [
+                    { text: "Converting categorical variables into binary vectors", correct: true, reason: "Correct! Each category becomes a vector with a single 1 and the rest 0s." },
+                    { text: "Normalizing continuous features", correct: false, reason: "Incorrect. One-hot encoding is for categorical data, not continuous normalization." },
+                    { text: "Reducing the dimensionality of images", correct: false, reason: "Incorrect. That is done by pooling or PCA, not one-hot encoding." },
+                    { text: "Initializing weights randomly", correct: false, reason: "Incorrect. Weight initialization is a separate concern." }
+                ],
+                hint: "Think of turning categories like 'red', 'green', 'blue' into separate binary columns."
+            },
+            {
+                topic: "Architecture Design",
+                q: "When would you use a convolutional neural network (CNN) instead of a fully connected network?",
+                options: [
+                    { text: "When working with image or spatial data", correct: true, reason: "Correct! CNNs exploit local spatial structure with shared weights (filters), making them efficient for images." },
+                    { text: "When working with tabular data", correct: false, reason: "Incorrect. Fully connected networks are typically better for tabular data." },
+                    { text: "When the dataset is very small", correct: false, reason: "Incorrect. CNNs often need substantial data; small datasets may favor simpler models." },
+                    { text: "When you need interpretable linear coefficients", correct: false, reason: "Incorrect. Linear models are more interpretable than CNNs." }
+                ],
+                hint: "What kind of data has strong local correlations between neighboring values?"
+            },
+            {
+                topic: "Architecture Design",
+                q: "What is the role of a pooling layer in a CNN?",
+                options: [
+                    { text: "To reduce spatial dimensions and computational load", correct: true, reason: "Correct! Pooling (e.g., max or average) downsamples feature maps, reducing parameters and providing translation invariance." },
+                    { text: "To increase the number of channels", correct: false, reason: "Incorrect. Pooling reduces spatial size, not channel count." },
+                    { text: "To apply non-linear activation", correct: false, reason: "Incorrect. Activation functions handle non-linearity; pooling is a downsampling operation." },
+                    { text: "To normalize the input images", correct: false, reason: "Incorrect. Normalization happens during preprocessing." }
+                ],
+                hint: "Pooling makes feature maps smaller — think 'max pool 2x2' halves width and height."
+            },
+            {
+                topic: "Training Dynamics",
+                q: "What is an epoch in neural network training?",
+                options: [
+                    { text: "One complete pass through the entire training dataset", correct: true, reason: "Correct! An epoch ends when the model has seen every training example once." },
+                    { text: "One weight update step", correct: false, reason: "Incorrect. That is an iteration or step, not an epoch." },
+                    { text: "The time it takes to load the data", correct: false, reason: "Incorrect. Loading time is unrelated to the definition of an epoch." },
+                    { text: "The number of layers in the network", correct: false, reason: "Incorrect. Layer count is an architectural property." }
+                ],
+                hint: "If you have 1000 training samples and a batch size of 100, how many iterations make one epoch?"
+            },
+            {
+                topic: "Training Dynamics",
+                q: "What does a validation set help you monitor?",
+                options: [
+                    { text: "The model's generalization performance during training", correct: true, reason: "Correct! Validation loss/accuracy indicates how well the model performs on data it hasn't trained on." },
+                    { text: "The exact gradients of the weights", correct: false, reason: "Incorrect. Gradients are computed on training data during backprop." },
+                    { text: "The number of parameters in the network", correct: false, reason: "Incorrect. Parameter count is fixed by architecture." },
+                    { text: "The speed of the forward pass", correct: false, reason: "Incorrect. Speed is a computational concern, not a validation metric." }
+                ],
+                hint: "You want to know if your model is overfitting — which dataset tells you that?"
+            },
+            {
+                topic: "Training Dynamics",
+                q: "What is early stopping?",
+                options: [
+                    { text: "Halting training when validation performance stops improving", correct: true, reason: "Correct! Early stopping prevents overfitting by stopping before the model memorizes training noise." },
+                    { text: "Stopping training after exactly one epoch", correct: false, reason: "Incorrect. That would likely underfit." },
+                    { text: "Reducing the learning rate to zero immediately", correct: false, reason: "Incorrect. That is learning rate decay, not early stopping." },
+                    { text: "Removing the last hidden layer", correct: false, reason: "Incorrect. Architecture changes are separate from training control." }
+                ],
+                hint: "You monitor validation loss and stop when it starts to rise."
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "If Delta w = learning_rate * delta * x, and learning_rate and delta are held constant, how does Delta w change if x doubles?",
+                options: [
+                    { text: "Delta w doubles", correct: true, reason: "Correct! Since Delta w is directly proportional to x, doubling x doubles the update." },
+                    { text: "Delta w halves", correct: false, reason: "Incorrect. That would be inverse proportionality." },
+                    { text: "Delta w stays the same", correct: false, reason: "Incorrect. A constant product would require x to be fixed." },
+                    { text: "Delta w quadruples", correct: false, reason: "Incorrect. That would imply a quadratic relationship." }
+                ],
+                hint: "y = a * b * c. If a and b are constant, y is directly proportional to c."
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "If x = 0 for a given weight connection, what is the weight update Delta w?",
+                options: [
+                    { text: "Zero", correct: true, reason: "Correct! Delta w = learning_rate * delta * x = learning_rate * delta * 0 = 0." },
+                    { text: "Equal to the learning rate", correct: false, reason: "Incorrect. The learning rate is multiplied by x, which is zero." },
+                    { text: "Equal to delta", correct: false, reason: "Incorrect. The x factor zeroes out the entire product." },
+                    { text: "Undefined", correct: false, reason: "Incorrect. The product is well-defined and equals zero." }
+                ],
+                hint: "Anything multiplied by zero is zero."
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "If a hidden ReLU neuron outputs 0, what happens to its upstream weight updates?",
+                options: [
+                    { text: "They become zero because the local gradient is zero", correct: true, reason: "Correct! ReLU's derivative is 0 for negative inputs, so gradients flowing back through that neuron are zeroed out." },
+                    { text: "They double to compensate", correct: false, reason: "Incorrect. There is no compensation mechanism; the gradient simply vanishes." },
+                    { text: "They become negative", correct: false, reason: "Incorrect. Zero gradient means zero update, not a negative one." },
+                    { text: "They are unaffected", correct: false, reason: "Incorrect. The zero derivative blocks gradient flow through that path." }
+                ],
+                hint: "What is the derivative of ReLU(z) when z < 0?"
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "In the update rule Delta w = eta * delta * x, what does delta represent?",
+                options: [
+                    { text: "The error gradient at the neuron's output", correct: true, reason: "Correct! Delta is the local blame assigned to the neuron, propagated from the loss." },
+                    { text: "The weight itself", correct: false, reason: "Incorrect. The weight is what we are updating, not the delta term." },
+                    { text: "The number of training samples", correct: false, reason: "Incorrect. Sample count is unrelated to the local gradient term." },
+                    { text: "The activation function", correct: false, reason: "Incorrect. The activation function shapes delta but is not delta itself." }
+                ],
+                hint: "Delta measures 'how much this neuron contributed to the error'."
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "If eta = 0.1, delta = 2, and x = 3, what is Delta w?",
+                options: [
+                    { text: "0.6", correct: true, reason: "Correct! Delta w = 0.1 * 2 * 3 = 0.6." },
+                    { text: "0.2", correct: false, reason: "Incorrect. 0.1 * 2 = 0.2, but you must also multiply by x = 3." },
+                    { text: "6.0", correct: false, reason: "Incorrect. You forgot to include the learning rate of 0.1." },
+                    { text: "0.06", correct: false, reason: "Incorrect. 0.1 * 2 * 3 = 0.6, not 0.06." }
+                ],
+                hint: "Multiply the three numbers: 0.1 * 2 * 3."
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "If the learning rate is halved and all other factors remain constant, how does Delta w change?",
+                options: [
+                    { text: "It halves", correct: true, reason: "Correct! Delta w is directly proportional to eta, so halving eta halves the update." },
+                    { text: "It doubles", correct: false, reason: "Incorrect. That would be inverse proportionality." },
+                    { text: "It stays the same", correct: false, reason: "Incorrect. The update scales with the learning rate." },
+                    { text: "It becomes zero", correct: false, reason: "Incorrect. Only zero learning rate would zero the update." }
+                ],
+                hint: "Delta w = eta * delta * x. If eta halves, what happens to the product?"
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "In a network with two hidden layers, how does backpropagation propagate gradients?",
+                options: [
+                    { text: "From the output layer backward to the input layer", correct: true, reason: "Correct! Backprop reverses the forward pass, applying the chain rule layer by layer." },
+                    { text: "From the input layer forward to the output layer", correct: false, reason: "Incorrect. That is the forward pass." },
+                    { text: "Randomly across all layers simultaneously", correct: false, reason: "Incorrect. Backprop follows a deterministic reverse order." },
+                    { text: "Only within the output layer", correct: false, reason: "Incorrect. Gradients must propagate through all layers to update their weights." }
+                ],
+                hint: "The name says it all: 'back' + 'propagation'."
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "What happens to weight updates if the learning rate is set to zero?",
+                options: [
+                    { text: "No updates occur; the network does not learn", correct: true, reason: "Correct! Delta w = 0 * delta * x = 0, so weights remain frozen." },
+                    { text: "Updates happen but are very small", correct: false, reason: "Incorrect. Zero times anything is exactly zero." },
+                    { text: "The network trains faster", correct: false, reason: "Incorrect. A zero learning rate means no training at all." },
+                    { text: "The gradients become infinite", correct: false, reason: "Incorrect. Gradients are independent of the learning rate magnitude." }
+                ],
+                hint: "If eta = 0, the entire update product becomes zero."
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "If a neuron's delta is negative and its input x is positive, what is the sign of Delta w?",
+                options: [
+                    { text: "Negative", correct: true, reason: "Correct! eta is positive, delta is negative, x is positive, so the product is negative." },
+                    { text: "Positive", correct: false, reason: "Incorrect. A negative times a positive is negative." },
+                    { text: "Zero", correct: false, reason: "Incorrect. Neither delta nor x is zero." },
+                    { text: "It depends on the bias", correct: false, reason: "Incorrect. Bias does not enter the Delta w formula." }
+                ],
+                hint: "Multiply signs: (+eta) * (-delta) * (+x)."
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "In a network with a single hidden ReLU neuron that outputs 0, which weights receive updates?",
+                options: [
+                    { text: "Only the output layer weights connected to that neuron", correct: true, reason: "Correct! The ReLU neuron's zero output blocks gradients from flowing to its input weights, but the output layer still receives its (zero) signal and updates accordingly." },
+                    { text: "All weights in the network", correct: false, reason: "Incorrect. Upstream weights through the dead ReLU receive zero gradient." },
+                    { text: "No weights receive updates", correct: false, reason: "Incorrect. The output layer can still update based on its own gradient." },
+                    { text: "Only the bias of the ReLU neuron", correct: false, reason: "Incorrect. The bias gradient also depends on the ReLU derivative, which is zero." }
+                ],
+                hint: "The dead ReLU blocks gradient flow backward, but the output layer is downstream of it."
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "If the input signal x to a weight is very large, what happens to the weight update (all else equal)?",
+                options: [
+                    { text: "The update becomes proportionally larger", correct: true, reason: "Correct! Delta w scales linearly with x, so larger inputs yield larger updates." },
+                    { text: "The update becomes smaller", correct: false, reason: "Incorrect. That would be inverse proportionality." },
+                    { text: "The update is unchanged", correct: false, reason: "Incorrect. x is a direct multiplicative factor." },
+                    { text: "The update becomes negative", correct: false, reason: "Incorrect. Sign depends on delta, not magnitude of x." }
+                ],
+                hint: "Delta w = eta * delta * x. Larger x means larger product."
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "In a two-hidden-layer network, which layer's weights are updated first during backpropagation?",
+                options: [
+                    { text: "The output layer's weights", correct: true, reason: "Correct! Backprop starts at the output and works backward, so output layer weights receive gradients first." },
+                    { text: "The first hidden layer's weights", correct: false, reason: "Incorrect. Gradients must propagate through later layers first." },
+                    { text: "All layers simultaneously", correct: false, reason: "Incorrect. Backprop follows a sequential reverse order." },
+                    { text: "The input layer's weights", correct: false, reason: "Incorrect. Input layer weights are updated last in the backward pass." }
+                ],
+                hint: "Backprop reverses the forward pass: output → hidden2 → hidden1 → input."
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "What is the effect of a very small learning rate on training?",
+                options: [
+                    { text: "Training converges very slowly", correct: true, reason: "Correct! Small steps mean many iterations are needed to reach a minimum." },
+                    { text: "Training diverges immediately", correct: false, reason: "Incorrect. Divergence is associated with too-large learning rates." },
+                    { text: "The model overfits instantly", correct: false, reason: "Incorrect. Overfitting is about model capacity, not learning rate magnitude." },
+                    { text: "The gradients become zero", correct: false, reason: "Incorrect. Gradients are independent of the learning rate value." }
+                ],
+                hint: "Think of walking toward a destination with tiny baby steps versus normal strides."
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "If Delta w = 0 for a particular weight, what can we conclude?",
+                options: [
+                    { text: "Either the learning rate, delta, or input x (or a combination) is zero", correct: true, reason: "Correct! The product is zero if any factor is zero." },
+                    { text: "The weight is already optimal", correct: false, reason: "Incorrect. Zero update may just mean zero input, not optimality." },
+                    { text: "The network has converged", correct: false, reason: "Incorrect. Convergence requires all updates to be near zero, not just one." },
+                    { text: "The bias must also be zero", correct: false, reason: "Incorrect. Bias is a separate parameter with its own update rule." }
+                ],
+                hint: "A product is zero if and only if at least one factor is zero."
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "In a network with 3 inputs, 2 hidden nodes, and 1 output, how many weights connect the input layer to the hidden layer?",
+                options: [
+                    { text: "6", correct: true, reason: "Correct! 3 inputs × 2 hidden nodes = 6 weights (plus 2 biases for the hidden nodes)." },
+                    { text: "3", correct: false, reason: "Incorrect. That is just the number of inputs, not the number of connections." },
+                    { text: "2", correct: false, reason: "Incorrect. That is the number of hidden nodes." },
+                    { text: "5", correct: false, reason: "Incorrect. 3 + 2 = 5, but weights are multiplicative connections, not sums." }
+                ],
+                hint: "Each input connects to each hidden node. Multiply the counts."
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "If the same input x is fed to two different weights with different deltas, how do their updates compare?",
+                options: [
+                    { text: "The update is larger for the weight with larger |delta|", correct: true, reason: "Correct! Delta w = eta * delta * x. With eta and x fixed, Delta w scales with delta." },
+                    { text: "Both updates are always equal", correct: false, reason: "Incorrect. Different deltas produce different updates." },
+                    { text: "The update is larger for the weight with smaller |delta|", correct: false, reason: "Incorrect. That would be inverse proportionality." },
+                    { text: "Neither weight receives an update", correct: false, reason: "Incorrect. Both receive updates unless delta or x is zero." }
+                ],
+                hint: "With eta and x constant, Delta w is directly proportional to delta."
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "What does it mean if a weight's update is consistently zero across all training samples?",
+                options: [
+                    { text: "The corresponding input feature is always zero", correct: true, reason: "Correct! If x = 0 for all samples, Delta w = eta * delta * 0 = 0 always." },
+                    { text: "The weight is perfectly optimal", correct: false, reason: "Incorrect. Zero update may simply mean the input is never active." },
+                    { text: "The learning rate is too high", correct: false, reason: "Incorrect. Learning rate affects magnitude, not whether the update is zero." },
+                    { text: "The network has too many layers", correct: false, reason: "Incorrect. Layer count does not force zero updates." }
+                ],
+                hint: "Think about what happens if a feature is always zero in your dataset."
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "If a hidden ReLU neuron outputs a positive value, how does its gradient behave?",
+                options: [
+                    { text: "The gradient passes through unchanged (derivative = 1)", correct: true, reason: "Correct! For positive inputs, ReLU(z) = z, so its derivative is 1 and gradients flow normally." },
+                    { text: "The gradient is zeroed out", correct: false, reason: "Incorrect. That happens for negative inputs." },
+                    { text: "The gradient is doubled", correct: false, reason: "Incorrect. ReLU's derivative is 1, not 2, for positive inputs." },
+                    { text: "The gradient becomes negative", correct: false, reason: "Incorrect. The derivative is positive 1." }
+                ],
+                hint: "What is d/dz max(0, z) when z > 0?"
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "In the formula Delta w = eta * delta * x, which term is a hyperparameter set by the user?",
+                options: [
+                    { text: "eta (learning rate)", correct: true, reason: "Correct! The learning rate is chosen by the practitioner, not learned from data." },
+                    { text: "delta (node blame)", correct: false, reason: "Incorrect. Delta is computed during backpropagation from the data and loss." },
+                    { text: "x (input signal)", correct: false, reason: "Incorrect. x comes from the training data." },
+                    { text: "All of the above", correct: false, reason: "Incorrect. Only eta is a user-set hyperparameter." }
+                ],
+                hint: "Which of these would you typically tune by hand or via search?"
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "If two weights share the same input x and the same delta, but one has a larger learning rate, how do their updates compare?",
+                options: [
+                    { text: "The one with the larger learning rate gets a larger update", correct: true, reason: "Correct! Delta w scales linearly with eta when delta and x are fixed." },
+                    { text: "Both updates are equal", correct: false, reason: "Incorrect. Different learning rates produce different updates." },
+                    { text: "The one with the smaller learning rate gets a larger update", correct: false, reason: "Incorrect. That would be inverse proportionality." },
+                    { text: "Neither receives an update", correct: false, reason: "Incorrect. Both receive updates proportional to their learning rates." }
+                ],
+                hint: "Delta w is directly proportional to eta."
+            },
+            {
+                topic: "Proportional Weight Updates",
+                q: "What is the primary advantage of using the chain rule in backpropagation?",
+                options: [
+                    { text: "It allows efficient computation of gradients for all weights in one backward pass", correct: true, reason: "Correct! The chain rule lets us reuse intermediate gradient computations, making backprop tractable." },
+                    { text: "It guarantees the global minimum will be found", correct: false, reason: "Incorrect. Gradient descent can still get stuck in local minima." },
+                    { text: "It eliminates the need for a learning rate", correct: false, reason: "Incorrect. A learning rate is still required to scale updates." },
+                    { text: "It removes the need for activation functions", correct: false, reason: "Incorrect. Activation functions are essential for non-linearity." }
+                ],
+                hint: "Think about computational efficiency: would you want to recompute gradients from scratch for every weight?"
+            }
+        ];
+
+        extraTopics.forEach(q => quizData.push(q));
+
+        let currentIdx = 0;
+        let selectedOptionIdx = null;
+        let score = 0;
+        let userChoices = [];
+
+        function initQuiz() {
+            const container = document.getElementById('quiz-form');
+            container.innerHTML = '';
+
+            quizData.forEach((q, idx) => {
+                const card = document.createElement('div');
+                card.className = `question-card ${idx === 0 ? 'active' : ''}`;
+                card.id = `q-${idx}`;
+
+                let optionsHtml = '';
+                q.options.forEach((opt, oIdx) => {
+                    optionsHtml += `<li class="option-item" onclick="selectOption(${idx}, ${oIdx}, this)">${opt.text}</li>`;
+                });
+
+                card.innerHTML = `
+                    <span class="topic-tag">${q.topic}</span>
+                    <div class="question-text">${idx + 1}. ${q.q}</div>
+                    <button class="hint-btn" onclick="toggleHint(${idx})">💡 Need a hint?</button>
+                    <div class="hint-text" id="hint-${idx}">${q.hint}</div>
+                    <ul class="options-list">${optionsHtml}</ul>
+                `;
+                container.appendChild(card);
+            });
+            updateProgressBar();
+        }
+
+        function selectOption(qIdx, oIdx, element) {
+            const siblings = element.parentNode.querySelectorAll('.option-item');
+            siblings.forEach(s => s.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedOptionIdx = oIdx;
+            document.getElementById('next-btn').disabled = false;
+        }
+
+        function toggleHint(idx) {
+            const hint = document.getElementById(`hint-${idx}`);
+            hint.style.display = hint.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function updateProgressBar() {
+            const bar = document.getElementById('bar');
+            const pct = (currentIdx / quizData.length) * 100;
+            bar.style.width = `${pct}%`;
+        }
+
+        function nextQuestion() {
+            if (selectedOptionIdx === null) return;
+
+            userChoices.push({
+                questionNum: currentIdx + 1,
+                questionText: quizData[currentIdx].q,
+                chosen: quizData[currentIdx].options[selectedOptionIdx].text,
+                correct: quizData[currentIdx].options[selectedOptionIdx].correct,
+                explanation: quizData[currentIdx].options[selectedOptionIdx].reason
+            });
+
+            if (quizData[currentIdx].options[selectedOptionIdx].correct) {
+                score++;
+            }
+
+            document.getElementById(`q-${currentIdx}`).classList.remove('active');
+            currentIdx++;
+
+            if (currentIdx < quizData.length) {
+                document.getElementById(`q-${currentIdx}`).classList.add('active');
+                document.getElementById('question-counter').innerText = `Question ${currentIdx + 1} of ${quizData.length}`;
+                document.getElementById('next-btn').disabled = true;
+                if (currentIdx === quizData.length - 1) {
+                    document.getElementById('next-btn').innerText = "Finish & See Results";
+                }
+                selectedOptionIdx = null;
+                updateProgressBar();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('bar').style.width = '100%';
+            document.getElementById('quiz-intro').style.display = 'none';
+            document.getElementById('progress-container').style.display = 'none';
+            document.getElementById('controls').style.display = 'none';
+            document.getElementById('quiz-form').style.display = 'none';
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.style.display = 'block';
+            document.getElementById('score').innerText = `${score} / ${quizData.length}`;
+
+            const msg = document.getElementById('feedback-message');
+            if (score === quizData.length) msg.innerText = "Master tier! You completely grasp the structural forward pass computations and multiplicative parameter updates.";
+            else if (score >= 40) msg.innerText = "Great performance! You possess an excellent baseline understanding of neural network parameters.";
+            else msg.innerText = "Nice run! Review the complete diagnostic performance trace ledger below to shore up specific concepts.";
+
+            const reviewList = document.getElementById('review-list');
+            reviewList.innerHTML = '<h4>Diagnostic Audit Log:</h4>';
+            userChoices.forEach(choice => {
+                const item = document.createElement('div');
+                item.className = `review-item ${choice.correct ? 'correct-rev' : 'incorrect-rev'}`;
+                item.innerHTML = `
+                    <strong>Question ${choice.questionNum}:</strong> ${choice.questionText}<br/>
+                    <em>Choice selected:</em> ${choice.chosen} (${choice.correct ? '✅ Pass' : '❌ Wrong'})<br/>
+                    <strong>Analysis:</strong> ${choice.explanation}
+                `;
+                reviewList.appendChild(item);
+            });
+        }
+
+        function restartQuiz() {
+            currentIdx = 0;
+            selectedOptionIdx = null;
+            score = 0;
+            userChoices = [];
+
+            document.getElementById('quiz-intro').style.display = 'block';
+            document.getElementById('progress-container').style.display = 'block';
+            document.getElementById('controls').style.display = 'flex';
+            document.getElementById('quiz-form').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('next-btn').innerText = "Next Question";
+            document.getElementById('question-counter').innerText = `Question 1 of ${quizData.length}`;
+
+            initQuiz();
+        }
+
+        window.addEventListener('resize', () => {
+            const inputs = parseInt(document.getElementById('input-count').value);
+            const hiddens = parseInt(document.getElementById('hidden-count').value);
+            drawNetwork(inputs, hiddens);
+        });
+
+        window.onload = function () {
+            updateNetworkStructure();
+            initQuiz();
+        };
+    </script>
+</body>
+</html>
