@@ -24,13 +24,16 @@
         .control-group select, .control-group input[type="range"] { width: 100%; padding: 5px; border-radius: 4px; border: 1px solid #cbd5e0; box-sizing: border-box; }
         .sim-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media(max-width: 768px) { .sim-container { grid-template-columns: 1fr; } }
-        .canvas-container { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; display: flex; justify-content: center; align-items: center; min-height: 360px; }
+        .canvas-container { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; display: flex; justify-content: center; align-items: center; min-height: 420px; }
         canvas { max-width: 100%; height: auto; }
-        .math-panel { background: #1a202c; color: #aeecff; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 0.9em; overflow-y: auto; max-height: 360px; }
+        .math-panel { background: #1a202c; color: #aeecff; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 0.9em; overflow-y: auto; max-height: 420px; }
         .math-panel h4 { color: #fff; margin-top: 0; border-bottom: 1px solid #4a5568; padding-bottom: 5px; }
         .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: 0.85em; }
         .legend span { display: inline-flex; align-items: center; gap: 5px; }
         .swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .slider-box { font-size: 0.85em; }
+        .slider-box input[type="range"] { width: 100%; margin-top: 4px; }
+        .slider-label { text-align: center; font-weight: bold; color: #2b6cb0; }
         .quiz-container { background: var(--card-bg); padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); border-top: 5px solid var(--primary); margin-top: 40px; }
         .question-card { display: none; }
         .question-card.active { display: block; }
@@ -63,7 +66,7 @@
 
     <div class="card">
         <h2>1. Live Network Topology Builder</h2>
-        <p>Configure your model setup below (At most 3 inputs, at most 2 hidden nodes, and a standard single binary output node). Bias nodes are drawn as dashed green circles and labeled b<sub>k</sub>. Weights are labeled w<sub>ij</sub> (from node i to node j) and biases on connections are shown as b<sub>j</sub>.</p>
+        <p>Configure your model setup below (At most 3 inputs, at most 2 hidden nodes, and a standard single binary output node). Bias nodes are drawn as dashed green circles containing the constant value <strong>1</strong>, with their identifier b<sub>k</sub> shown below. Weights are labeled w<sub>ij</sub> (from node i to node j).</p>
 
         <div class="controls-grid">
             <div class="control-group">
@@ -81,16 +84,19 @@
                     <option value="2" selected>2 Hidden Nodes</option>
                 </select>
             </div>
-            <div class="control-group">
-                <label for="input-val">Adjust Active Signal Values:</label>
-                <input type="range" id="input-val" min="-1" max="1" step="0.1" value="0.5" oninput="updateNetworkStructure()">
-                <div style="font-size: 0.8em; text-align: center; margin-top: 2px;">Value: <span id="val-display">0.5</span></div>
+            <div class="control-group" style="grid-column: 1 / -1;">
+                <label>Adjust Input Signal Values:</label>
+                <div id="input-sliders" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 6px;"></div>
+                <label style="margin-top: 10px; font-weight: normal; font-size: 0.85em; display: flex; align-items: center; gap: 6px;">
+                    <input type="checkbox" id="link-inputs" checked onchange="updateNetworkStructure()">
+                    Link all inputs (move together)
+                </label>
             </div>
         </div>
 
         <div class="sim-container">
             <div class="canvas-container">
-                <canvas id="networkCanvas" width="480" height="380"></canvas>
+                <canvas id="networkCanvas" width="480" height="400"></canvas>
             </div>
             <div class="math-panel" id="math-output">
                 <h4>Forward Pass Calculations</h4>
@@ -102,7 +108,7 @@
             <span><span class="swatch" style="background:#4299e1"></span> Input node</span>
             <span><span class="swatch" style="background:#ed8936"></span> Hidden node</span>
             <span><span class="swatch" style="background:#48bb78"></span> Output node</span>
-            <span><span class="swatch" style="background:#68d391; border:1px dashed #2f855a"></span> Bias node (b)</span>
+            <span><span class="swatch" style="background:#c6f6d5; border:1px dashed #2f855a"></span> Bias node (value = 1)</span>
             <span><span class="swatch" style="background:#805ad5"></span> Weight label (w<sub>ij</sub>)</span>
         </div>
     </div>
@@ -149,85 +155,125 @@
     <script>
         /* Part A: Simulation Rendering Engine */
 
-        // Fixed weight/bias values so labels stay consistent and readable
         const WEIGHTS = {
-            // input -> hidden: w_ih[i][j], i=1..3, j=1..2
             ih: [
-                [0.4, -0.3],   // from x1
-                [0.5,  0.6],   // from x2
-                [-0.2, 0.7]    // from x3
+                [0.4, -0.3],
+                [0.5,  0.6],
+                [-0.2, 0.7]
             ],
-            // hidden -> output: w_ho[j], j=1..2
             ho: [0.5, -0.4],
-            // biases: b_h[j] for hidden nodes, b_o for output node
             b_h: [0.1, -0.2],
             b_o: -0.2
         };
 
+        let inputValues = [0.5, 0.5, 0.5];
+
+        function buildInputSliders(count) {
+            const container = document.getElementById('input-sliders');
+            container.innerHTML = '';
+            for (let i = 0; i < count; i++) {
+                const wrap = document.createElement('div');
+                wrap.className = 'slider-box';
+                wrap.innerHTML = `
+                    <div class="slider-label">x<sub>${i + 1}</sub> = <span id="val-display-${i}">${inputValues[i].toFixed(1)}</span></div>
+                    <input type="range" id="input-val-${i}" min="-1" max="1" step="0.1"
+                           value="${inputValues[i]}"
+                           oninput="onSliderInput(${i}, this.value)">
+                `;
+                container.appendChild(wrap);
+            }
+        }
+
+        function onSliderInput(idx, value) {
+            const v = parseFloat(value);
+            if (document.getElementById('link-inputs').checked) {
+                inputValues = inputValues.map(() => v);
+                inputValues.forEach((val, i) => {
+                    const el = document.getElementById(`input-val-${i}`);
+                    if (el) el.value = val;
+                    const lbl = document.getElementById(`val-display-${i}`);
+                    if (lbl) lbl.innerText = val.toFixed(1);
+                });
+            } else {
+                inputValues[idx] = v;
+                const lbl = document.getElementById(`val-display-${idx}`);
+                if (lbl) lbl.innerText = v.toFixed(1);
+            }
+            updateNetworkStructure();
+        }
+
         function updateNetworkStructure() {
             const inputs = parseInt(document.getElementById('input-count').value);
             const hiddens = parseInt(document.getElementById('hidden-count').value);
-            const activeVal = parseFloat(document.getElementById('input-val').value);
-            document.getElementById('val-display').innerText = activeVal.toFixed(1);
+
+            if (document.getElementById('input-sliders').children.length !== inputs) {
+                buildInputSliders(inputs);
+            }
+
+            const x = [];
+            for (let i = 0; i < inputs; i++) {
+                const el = document.getElementById(`input-val-${i}`);
+                x.push(el ? parseFloat(el.value) : 0.5);
+            }
 
             let mathHtml = `<h4>Forward Pass Trace</h4>`;
             const hNodes = [];
 
             mathHtml += `<strong>1. Inputs Loaded:</strong><br/>`;
-            for (let i = 1; i <= inputs; i++) {
-                mathHtml += ` &bull; x<sub>${i}</sub> = ${activeVal}<br/>`;
+            for (let i = 0; i < inputs; i++) {
+                mathHtml += ` &bull; x<sub>${i + 1}</sub> = ${x[i].toFixed(2)}<br/>`;
             }
-            mathHtml += `<br/>`;
+            mathHtml += ` &bull; Bias node value = 1 (constant)<br/><br/>`;
 
             mathHtml += `<strong>2. Hidden Estimations (ReLU):</strong><br/>`;
-            for (let j = 1; j <= hiddens; j++) {
+            for (let j = 0; j < hiddens; j++) {
                 let sum = 0;
-                let terms = [];
-                for (let i = 1; i <= inputs; i++) {
-                    const w = WEIGHTS.ih[i - 1][j - 1];
-                    sum += activeVal * w;
-                    terms.push(`w<sub>${i}${inputs + j}</sub>&middot;x<sub>${i}</sub>`);
+                const terms = [];
+                for (let i = 0; i < inputs; i++) {
+                    const w = WEIGHTS.ih[i][j];
+                    sum += x[i] * w;
+                    terms.push(`w<sub>${i + 1}${inputs + j + 1}</sub>&middot;x<sub>${i + 1}</sub>`);
                 }
-                const b = WEIGHTS.b_h[j - 1];
+                const b = WEIGHTS.b_h[j];
                 const z = sum + b;
                 const a = Math.max(0, z);
                 hNodes.push(a);
 
-                mathHtml += ` &bull; z<sub>h${j}</sub> = ${terms.join(' + ')} + b<sub>${inputs + j}</sub><br/>`;
+                mathHtml += ` &bull; z<sub>h${j + 1}</sub> = ${terms.join(' + ')} + b<sub>${inputs + j + 1}</sub>&middot;1<br/>`;
                 mathHtml += ` &nbsp;&nbsp; = ${sum.toFixed(3)} + (${b.toFixed(2)}) = ${z.toFixed(3)}<br/>`;
-                mathHtml += ` &bull; h<sub>${j}</sub> = ReLU(z<sub>h${j}</sub>) = <strong>${a.toFixed(3)}</strong><br/>`;
+                mathHtml += ` &bull; h<sub>${j + 1}</sub> = ReLU(z<sub>h${j + 1}</sub>) = <strong>${a.toFixed(3)}</strong><br/>`;
             }
 
             let outSum = 0;
-            let outTerms = [];
-            for (let j = 1; j <= hiddens; j++) {
-                const w = WEIGHTS.ho[j - 1];
-                outSum += hNodes[j - 1] * w;
-                outTerms.push(`w<sub>${inputs + j}${inputs + hiddens + 1}</sub>&middot;h<sub>${j}</sub>`);
+            const outTerms = [];
+            for (let j = 0; j < hiddens; j++) {
+                const w = WEIGHTS.ho[j];
+                outSum += hNodes[j] * w;
+                outTerms.push(`w<sub>${inputs + j + 1}${inputs + hiddens + 1}</sub>&middot;h<sub>${j + 1}</sub>`);
             }
             const outputZ = outSum + WEIGHTS.b_o;
             const finalProb = 1 / (1 + Math.exp(-outputZ));
             const predClass = finalProb >= 0.5 ? 1 : 0;
 
             mathHtml += `<br/><strong>3. Binary Classification (Sigmoid):</strong><br/>`;
-            mathHtml += ` &bull; z<sub>out</sub> = ${outTerms.join(' + ')} + b<sub>${inputs + hiddens + 1}</sub><br/>`;
+            mathHtml += ` &bull; z<sub>out</sub> = ${outTerms.join(' + ')} + b<sub>${inputs + hiddens + 1}</sub>&middot;1<br/>`;
             mathHtml += ` &nbsp;&nbsp; = ${outSum.toFixed(3)} + (${WEIGHTS.b_o.toFixed(2)}) = ${outputZ.toFixed(3)}<br/>`;
             mathHtml += ` &bull; Probability = &sigma;(z<sub>out</sub>) = <strong>${(finalProb * 100).toFixed(1)}%</strong><br/>`;
             mathHtml += ` &bull; Final Decision &rarr; <span style='color:#fff; background:#2b6cb0; padding:2px 6px; border-radius:3px;'>Class ${predClass}</span>`;
 
             document.getElementById('math-output').innerHTML = mathHtml;
-            drawNetwork(inputs, hiddens);
+
+            drawNetwork(inputs, hiddens, x, hNodes);
         }
 
-        function drawNetwork(inputs, hiddens) {
+        function drawNetwork(inputs, hiddens, xVals, hVals) {
             const canvas = document.getElementById('networkCanvas');
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             const radius = 16;
-            const biasRadius = 12;
+            const biasRadius = 14;
 
-            // Layout: 4 columns (inputs | bias_h | hidden | bias_o | output) — actually 5 x-positions
             const colInput   = 70;
             const colBiasH   = 175;
             const colHidden  = 270;
@@ -236,29 +282,26 @@
 
             const layerGap = 62;
 
-            // Build node coordinate lists
             const inputNodes = [];
             const hiddenNodes = [];
             const outputNodes = [];
 
             const inTotalH = (inputs - 1) * layerGap;
-            const inStartY = (canvas.height - inTotalH) / 2;
+            const inStartY = (canvas.height - inTotalH) / 2 + 10;
             for (let i = 0; i < inputs; i++) {
                 inputNodes.push({ x: colInput, y: inStartY + i * layerGap });
             }
 
             const hidTotalH = (hiddens - 1) * layerGap;
-            const hidStartY = (canvas.height - hidTotalH) / 2;
+            const hidStartY = (canvas.height - hidTotalH) / 2 + 10;
             for (let j = 0; j < hiddens; j++) {
                 hiddenNodes.push({ x: colHidden, y: hidStartY + j * layerGap });
             }
 
-            outputNodes.push({ x: colOutput, y: canvas.height / 2 });
+            outputNodes.push({ x: colOutput, y: canvas.height / 2 + 10 });
 
-            // Bias nodes positioned between layers, vertically centered
             const biasHNodes = [];
             for (let j = 0; j < hiddens; j++) {
-                // Each hidden node gets its own bias node slightly offset toward it
                 biasHNodes.push({ x: colBiasH, y: hiddenNodes[j].y });
             }
             const biasONode = { x: colBiasO, y: outputNodes[0].y };
@@ -275,10 +318,9 @@
                     ctx.lineTo(n2.x, n2.y);
                     ctx.stroke();
 
-                    // Weight label w_{i}{inputs+j}
                     const mx = (n1.x + n2.x) / 2;
                     const my = (n1.y + n2.y) / 2;
-                    drawEdgeLabel(ctx, `w${i + 1}${inputs + j}`, mx, my, '#805ad5');
+                    drawEdgeLabel(ctx, `w${i + 1}${inputs + j + 1}`, mx, my, '#805ad5');
                 }
             }
 
@@ -297,7 +339,7 @@
                 drawEdgeLabel(ctx, `w${inputs + j + 1}${inputs + hiddens + 1}`, mx, my, '#805ad5');
             }
 
-            // ---------- Draw edges: bias -> hidden ----------
+            // ---------- Draw edges: bias -> hidden (dashed green) ----------
             ctx.setLineDash([5, 4]);
             ctx.strokeStyle = '#68d391';
             for (let j = 0; j < hiddens; j++) {
@@ -328,28 +370,41 @@
             // ---------- Draw nodes ----------
             inputNodes.forEach((node, i) => {
                 drawCircle(ctx, node.x, node.y, radius, '#4299e1', `x${i + 1}`);
+                if (xVals) {
+                    ctx.fillStyle = '#2b6cb0';
+                    ctx.font = 'bold 11px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(xVals[i].toFixed(1), node.x, node.y + radius + 3);
+                }
             });
             hiddenNodes.forEach((node, j) => {
                 drawCircle(ctx, node.x, node.y, radius, '#ed8936', `h${j + 1}`);
+                if (hVals) {
+                    ctx.fillStyle = '#c05621';
+                    ctx.font = 'bold 11px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(hVals[j].toFixed(1), node.x, node.y + radius + 3);
+                }
             });
-            outputNodes.forEach(() => {
-                drawCircle(ctx, outputNodes[0].x, outputNodes[0].y, radius, '#48bb78', 'ŷ');
-            });
+            drawCircle(ctx, outputNodes[0].x, outputNodes[0].y, radius, '#48bb78', 'ŷ');
 
-            // Bias nodes (dashed border, smaller)
+            // Bias nodes — show constant value "1" inside, identifier below
             biasHNodes.forEach((node, j) => {
-                drawBiasCircle(ctx, node.x, node.y, biasRadius, `b${inputs + j + 1}`);
+                drawBiasNode(ctx, node.x, node.y, biasRadius, '1', `b${inputs + j + 1}`);
             });
-            drawBiasCircle(ctx, biasONode.x, biasONode.y, biasRadius, `b${inputs + hiddens + 1}`);
+            drawBiasNode(ctx, biasONode.x, biasONode.y, biasRadius, '1', `b${inputs + hiddens + 1}`);
 
             // Column headers
             ctx.fillStyle = '#718096';
             ctx.font = 'bold 11px Arial';
             ctx.textAlign = 'center';
+            ctx.textBaseline = 'alphabetic';
             ctx.fillText('Inputs', colInput, 20);
-            ctx.fillText('Bias', colBiasH, 20);
+            ctx.fillText('Bias (=1)', colBiasH, 20);
             ctx.fillText('Hidden (ReLU)', colHidden, 20);
-            ctx.fillText('Bias', colBiasO, 20);
+            ctx.fillText('Bias (=1)', colBiasO, 20);
             ctx.fillText('Output (σ)', colOutput, 20);
         }
 
@@ -369,7 +424,8 @@
             ctx.fillText(label, x, y);
         }
 
-        function drawBiasCircle(ctx, x, y, r, label) {
+        // Bias node: value inside, identifier label below
+        function drawBiasNode(ctx, x, y, r, valueLabel, idLabel) {
             ctx.beginPath();
             ctx.arc(x, y, r, 0, 2 * Math.PI);
             ctx.fillStyle = '#c6f6d5';
@@ -380,11 +436,18 @@
             ctx.stroke();
             ctx.setLineDash([]);
 
+            // Constant value "1" inside the node
             ctx.fillStyle = '#22543d';
-            ctx.font = 'bold 10px Arial';
+            ctx.font = 'bold 13px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(label, x, y);
+            ctx.fillText(valueLabel, x, y);
+
+            // Identifier label below the node
+            ctx.fillStyle = '#2f855a';
+            ctx.font = 'bold 10px Arial';
+            ctx.textBaseline = 'top';
+            ctx.fillText(idLabel, x, y + r + 2);
         }
 
         function drawEdgeLabel(ctx, text, x, y, color, isBias = false) {
@@ -396,7 +459,6 @@
             const w = metrics.width + padX * 2;
             const h = 12;
 
-            // White pill background for readability
             ctx.fillStyle = 'rgba(255,255,255,0.92)';
             ctx.strokeStyle = isBias ? '#68d391' : '#cbd5e0';
             ctx.lineWidth = 1;
@@ -533,10 +595,62 @@
                     { text: "The learning rate", correct: false, reason: "Incorrect. Learning rate scales updates, it is not part of the active forward sum." }
                 ],
                 hint: "Write out z = w1x1 + w2x2 + b and substitute x1 = 0, x2 = 0. What remains?"
-            }
-        ];
-
-        const extraTopics = [
+            },
+            {
+                topic: "Weights and Biases",
+                q: "Why is the bias node's input always set to 1?",
+                options: [
+                    { text: "Because multiplying the bias weight by 1 leaves the bias value unchanged, letting it act as a learnable constant offset", correct: true, reason: "Correct! The constant 1 input means the bias weight b directly contributes b to the linear combination z." },
+                    { text: "Because 1 is the smallest possible input value", correct: false, reason: "Incorrect. Inputs can be negative or zero; 1 is not a minimum." },
+                    { text: "Because the network cannot accept 0 as an input", correct: false, reason: "Incorrect. Networks handle zero inputs fine; the 1 is a mathematical convenience." },
+                    { text: "Because biases must always equal 1", correct: false, reason: "Incorrect. The bias weight is learned; only its input is fixed at 1." }
+                ],
+                hint: "Think about why you'd want a fixed multiplier of 1 on a learnable parameter."
+            },
+            {
+                topic: "Weights and Biases",
+                q: "How does the bias node's update rule differ from a regular weight's update rule?",
+                options: [
+                    { text: "The bias uses a constant input of 1 instead of x_i", correct: true, reason: "Correct! Delta b = eta * delta * 1, so the update depends only on the learning rate and blame." },
+                    { text: "The bias is never updated during training", correct: false, reason: "Incorrect. Biases are learned parameters and are updated every step." },
+                    { text: "The bias update uses a different learning rate", correct: false, reason: "Incorrect. The same learning rate typically applies to weights and biases." },
+                    { text: "The bias has no gradient", correct: false, reason: "Incorrect. Biases have gradients just like weights, just with input fixed at 1." }
+                ],
+                hint: "Compare Delta w = eta * delta * x_i with Delta b = eta * delta * ?"
+            },
+            {
+                topic: "Forward Pass",
+                q: "In the forward pass, what is computed first for a single neuron?",
+                options: [
+                    { text: "The weighted sum of inputs plus bias", correct: true, reason: "Correct! The linear combination z = sum(w_i * x_i) + b is computed before applying the activation function." },
+                    { text: "The activation function output", correct: false, reason: "Incorrect. Activation is applied after the linear combination." },
+                    { text: "The loss value", correct: false, reason: "Incorrect. Loss is computed at the end of the forward pass, after the output layer." },
+                    { text: "The gradient of the weights", correct: false, reason: "Incorrect. Gradients are computed during backpropagation, not the forward pass." }
+                ],
+                hint: "Follow the order: inputs → weighted sum → activation → output."
+            },
+            {
+                topic: "Forward Pass",
+                q: "If a neuron has inputs [1, 2], weights [0.5, -0.5], and bias 1, what is the pre-activation value z?",
+                options: [
+                    { text: "0.5", correct: true, reason: "Correct! z = (1 * 0.5) + (2 * -0.5) + 1 = 0.5 - 1 + 1 = 0.5." },
+                    { text: "-0.5", correct: false, reason: "Incorrect. Recalculate: 0.5 - 1 + 1 = 0.5, not -0.5." },
+                    { text: "1.5", correct: false, reason: "Incorrect. Check the sign of the second weight: 2 * -0.5 = -1." },
+                    { text: "2.0", correct: false, reason: "Incorrect. The bias is +1, and the weighted sum is 0.5 - 1 = -0.5, so z = 0.5." }
+                ],
+                hint: "z = (x1 * w1) + (x2 * w2) + b. Plug in the numbers carefully."
+            },
+            {
+                topic: "Forward Pass",
+                q: "What is the output of a sigmoid function when the input z = 0?",
+                options: [
+                    { text: "0.5", correct: true, reason: "Correct! Sigmoid(0) = 1 / (1 + e^0) = 1 / (1 + 1) = 0.5." },
+                    { text: "0", correct: false, reason: "Incorrect. Sigmoid never outputs exactly 0; it asymptotes toward 0 for very negative inputs." },
+                    { text: "1", correct: false, reason: "Incorrect. Sigmoid approaches 1 for very positive inputs, not at z = 0." },
+                    { text: "-1", correct: false, reason: "Incorrect. Sigmoid outputs are always between 0 and 1." }
+                ],
+                hint: "Sigmoid is symmetric around z = 0. What value lies exactly in the middle of 0 and 1?"
+            },
             {
                 topic: "Activation Functions",
                 q: "What is the primary purpose of an activation function in a neural network?",
@@ -580,39 +694,6 @@
                     { text: "When weights are initialized to zero", correct: false, reason: "Incorrect. Zero initialization causes symmetry problems, not vanishing gradients." }
                 ],
                 hint: "Think about what happens to gradients when you multiply many small numbers together repeatedly."
-            },
-            {
-                topic: "Forward Pass",
-                q: "In the forward pass, what is computed first for a single neuron?",
-                options: [
-                    { text: "The weighted sum of inputs plus bias", correct: true, reason: "Correct! The linear combination z = sum(w_i * x_i) + b is computed before applying the activation function." },
-                    { text: "The activation function output", correct: false, reason: "Incorrect. Activation is applied after the linear combination." },
-                    { text: "The loss value", correct: false, reason: "Incorrect. Loss is computed at the end of the forward pass, after the output layer." },
-                    { text: "The gradient of the weights", correct: false, reason: "Incorrect. Gradients are computed during backpropagation, not the forward pass." }
-                ],
-                hint: "Follow the order: inputs → weighted sum → activation → output."
-            },
-            {
-                topic: "Forward Pass",
-                q: "If a neuron has inputs [1, 2], weights [0.5, -0.5], and bias 1, what is the pre-activation value z?",
-                options: [
-                    { text: "0.5", correct: true, reason: "Correct! z = (1 * 0.5) + (2 * -0.5) + 1 = 0.5 - 1 + 1 = 0.5." },
-                    { text: "-0.5", correct: false, reason: "Incorrect. Recalculate: 0.5 - 1 + 1 = 0.5, not -0.5." },
-                    { text: "1.5", correct: false, reason: "Incorrect. Check the sign of the second weight: 2 * -0.5 = -1." },
-                    { text: "2.0", correct: false, reason: "Incorrect. The bias is +1, and the weighted sum is 0.5 - 1 = -0.5, so z = 0.5." }
-                ],
-                hint: "z = (x1 * w1) + (x2 * w2) + b. Plug in the numbers carefully."
-            },
-            {
-                topic: "Forward Pass",
-                q: "What is the output of a sigmoid function when the input z = 0?",
-                options: [
-                    { text: "0.5", correct: true, reason: "Correct! Sigmoid(0) = 1 / (1 + e^0) = 1 / (1 + 1) = 0.5." },
-                    { text: "0", correct: false, reason: "Incorrect. Sigmoid never outputs exactly 0; it asymptotes toward 0 for very negative inputs." },
-                    { text: "1", correct: false, reason: "Incorrect. Sigmoid approaches 1 for very positive inputs, not at z = 0." },
-                    { text: "-1", correct: false, reason: "Incorrect. Sigmoid outputs are always between 0 and 1." }
-                ],
-                hint: "Sigmoid is symmetric around z = 0. What value lies exactly in the middle of 0 and 1?"
             },
             {
                 topic: "Backpropagation",
@@ -1056,8 +1137,6 @@
             }
         ];
 
-        extraTopics.forEach(q => quizData.push(q));
-
         let currentIdx = 0;
         let selectedOptionIdx = null;
         let score = 0;
@@ -1190,7 +1269,7 @@
         window.addEventListener('resize', () => {
             const inputs = parseInt(document.getElementById('input-count').value);
             const hiddens = parseInt(document.getElementById('hidden-count').value);
-            drawNetwork(inputs, hiddens);
+            updateNetworkStructure();
         });
 
         window.onload = function () {
